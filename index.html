@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>iMessage Wrapped 2025 | wrap2025.com</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📱</text></svg>">
+<meta name="description" content="Your 2025 texting habits, exposed. See your most texted contacts, response time, personality type, and more.">
+<meta property="og:title" content="iMessage Wrapped 2025">
+<meta property="og:description" content="Your texting habits, exposed.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://wrap2025.com">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=Space+Grotesk:wght@400;500;700&display=swap');
+
+:root {
+    --bg: #0a0a12;
+    --card-bg: #12121f;
+    --text: #f0f0f0;
+    --muted: #8892a0;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --cyan: #22d3ee;
+    --pink: #f472b6;
+    --orange: #fb923c;
+    --purple: #a78bfa;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { scroll-behavior:smooth; }
+body {
+    font-family:'Space Grotesk',sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+}
+
+.container { max-width:700px; margin:0 auto; padding:0 24px; }
+
+/* HERO */
+.hero {
+    text-align:center;
+    padding:60px 24px 40px;
+    background:linear-gradient(180deg,#0f2847 0%,var(--bg) 100%);
+}
+
+.hero-icon { font-size:64px; margin-bottom:12px; }
+
+.hero h1 {
+    font-family:'Silkscreen',cursive;
+    font-size:48px;
+    line-height:1.2;
+    margin-bottom:12px;
+}
+
+.hero .subtitle {
+    font-size:20px;
+    color:var(--muted);
+    margin-bottom:24px;
+}
+
+.cta-buttons {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:12px;
+}
+
+.cta-btn {
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    font-family:'Silkscreen',cursive;
+    font-size:16px;
+    background:var(--green);
+    color:#000;
+    text-decoration:none;
+    padding:16px 32px;
+    border-radius:12px;
+    border:none;
+    cursor:pointer;
+    transition:transform 0.2s,background 0.2s;
+}
+.cta-btn:hover { background:#6ee7b7; transform:scale(1.02); }
+
+.cta-btn.secondary {
+    background:transparent;
+    border:2px solid var(--green);
+    color:var(--green);
+}
+.cta-btn.secondary:hover { background:rgba(74,222,128,0.1); }
+
+/* Hide share on desktop, download on mobile */
+.share-btn { display:none; }
+.mobile-note { display:none; }
+
+@media (max-width:768px) {
+    .download-btn { display:none; }
+    .share-btn { display:inline-flex; }
+    .mobile-note { display:block; margin-top:8px; font-size:13px; color:var(--muted); }
+}
+
+.hero-note {
+    margin-top:16px;
+    font-size:14px;
+    color:var(--muted);
+}
+
+/* PREVIEW SECTION */
+.preview-section {
+    padding:40px 0 48px;
+}
+
+.section-label {
+    font-family:'Silkscreen',cursive;
+    font-size:14px;
+    color:var(--green);
+    text-transform:uppercase;
+    letter-spacing:2px;
+    margin-bottom:20px;
+    text-align:center;
+}
+
+/* MINI GALLERY */
+.gallery-wrapper {
+    display:flex;
+    justify-content:center;
+}
+
+.gallery-container {
+    position:relative;
+    width:340px;
+    border-radius:20px;
+    overflow:hidden;
+    border:2px solid rgba(255,255,255,0.1);
+    background:var(--bg);
+}
+
+.gallery-viewport {
+    overflow:hidden;
+}
+
+.gallery-track {
+    display:flex;
+    transition:transform 0.4s cubic-bezier(0.4,0,0.2,1);
+}
+
+.gallery-slide {
+    min-width:100%;
+    height:520px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    padding:24px 20px;
+    text-align:center;
+    background:var(--bg);
+}
+
+.gallery-slide.intro { background:linear-gradient(145deg,#12121f 0%,#1a1a2e 50%,#0f2847 100%); }
+.gallery-slide.pink-bg { background:linear-gradient(145deg,#12121f 0%,#2d1a3d 100%); }
+.gallery-slide.purple-bg { background:linear-gradient(145deg,#12121f 0%,#1f1a3d 100%); }
+.gallery-slide.orange-bg { background:linear-gradient(145deg,#12121f 0%,#2d1f1a 100%); }
+
+.gallery-slide .slide-icon { font-size:48px; margin-bottom:8px; }
+.gallery-slide h2 { font-family:'Silkscreen',cursive; font-size:28px; line-height:1.2; margin-bottom:8px; }
+.gallery-slide .slide-label { font-family:'Silkscreen',cursive; font-size:11px; color:var(--green); letter-spacing:2px; margin-bottom:8px; }
+.gallery-slide .slide-text { font-size:18px; color:var(--muted); margin:6px 0; }
+.gallery-slide .big-number { font-family:'Silkscreen',cursive; font-size:64px; line-height:1; }
+.gallery-slide .huge-name { font-family:'Silkscreen',cursive; font-size:32px; margin:10px 0; }
+.gallery-slide .personality-type { font-family:'Silkscreen',cursive; font-size:20px; color:var(--purple); margin:12px 0; }
+.gallery-slide .roast { font-style:italic; color:var(--muted); font-size:14px; }
+.gallery-slide .badge { display:inline-block; padding:6px 14px; border-radius:18px; font-family:'Silkscreen',cursive; font-size:11px; margin-top:12px; border:2px solid; }
+.gallery-slide .badge.yellow { border-color:var(--yellow); color:var(--yellow); background:rgba(251,191,36,0.1); }
+.gallery-slide .badge.green { border-color:var(--green); color:var(--green); background:rgba(74,222,128,0.1); }
+
+.green { color:var(--green); }
+.yellow { color:var(--yellow); }
+.cyan { color:var(--cyan); }
+.pink { color:var(--pink); }
+.purple { color:var(--purple); }
+.orange { color:var(--orange); }
+.pct { font-family:'Space Grotesk',sans-serif; font-size:36px; }
+
+.gallery-progress {
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    padding:14px 0;
+    background:rgba(0,0,0,0.3);
+}
+
+.gallery-dot {
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.2);
+    cursor:pointer;
+    transition:all 0.3s;
+}
+.gallery-dot:hover { background:rgba(255,255,255,0.4); }
+.gallery-dot.active { background:var(--green); transform:scale(1.3); }
+
+.gallery-nav {
+    position:absolute;
+    top:50%;
+    transform:translateY(-50%);
+    font-size:24px;
+    color:rgba(255,255,255,0.3);
+    cursor:pointer;
+    padding:16px;
+    z-index:10;
+    user-select:none;
+    transition:color 0.2s;
+}
+.gallery-nav:hover { color:rgba(255,255,255,0.6); }
+.gallery-nav.prev { left:0; }
+.gallery-nav.next { right:0; }
+
+.gallery-hint {
+    text-align:center;
+    font-size:13px;
+    color:var(--muted);
+    margin-top:12px;
+}
+
+/* FEATURES */
+.features {
+    padding:32px 0;
+}
+
+.features-grid {
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:16px;
+}
+
+.feature {
+    text-align:center;
+    padding:16px 8px;
+}
+
+.feature-icon { font-size:28px; margin-bottom:8px; }
+.feature-title { font-family:'Silkscreen',cursive; font-size:11px; color:var(--text); }
+
+/* INSTALL */
+.install-section {
+    padding:40px 0;
+    border-top:1px solid rgba(255,255,255,0.1);
+}
+
+.install-steps { margin-top:28px; }
+
+.step {
+    display:flex;
+    gap:20px;
+    margin-bottom:32px;
+    align-items:flex-start;
+}
+
+.step-num {
+    font-family:'Silkscreen',cursive;
+    font-size:24px;
+    color:var(--green);
+    min-width:36px;
+}
+
+.step-content h3 {
+    font-family:'Silkscreen',cursive;
+    font-size:16px;
+    margin-bottom:10px;
+}
+
+.step-content p {
+    color:var(--muted);
+    font-size:16px;
+    margin-bottom:10px;
+}
+
+.code-block {
+    background:#1a1a2e;
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:8px;
+    padding:14px 18px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    overflow-x:auto;
+    margin:10px 0;
+}
+
+.code-block code { color:var(--cyan); }
+
+.warning {
+    background:rgba(251,191,36,0.1);
+    border:1px solid var(--yellow);
+    border-radius:8px;
+    padding:14px 18px;
+    font-size:14px;
+}
+
+.warning strong { color:var(--yellow); }
+
+/* PRIVACY */
+.privacy-section {
+    padding:40px 0;
+    border-top:1px solid rgba(255,255,255,0.1);
+    text-align:center;
+}
+
+.privacy-text {
+    color:var(--muted);
+    font-size:16px;
+    max-width:450px;
+    margin:0 auto;
+}
+
+.privacy-badges {
+    display:flex;
+    justify-content:center;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-top:24px;
+}
+
+.privacy-badge {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#1a1a2e;
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:20px;
+    padding:10px 16px;
+    font-size:14px;
+}
+
+.privacy-badge-icon { font-size:18px; }
+
+/* FOOTER */
+.footer {
+    padding:36px 0;
+    border-top:1px solid rgba(255,255,255,0.1);
+    text-align:center;
+}
+
+.footer-logo {
+    font-family:'Silkscreen',cursive;
+    font-size:18px;
+    color:var(--green);
+    margin-bottom:14px;
+}
+
+.footer-links {
+    display:flex;
+    justify-content:center;
+    gap:24px;
+    margin-bottom:14px;
+}
+
+.footer-links a {
+    color:var(--muted);
+    text-decoration:none;
+    font-size:14px;
+    transition:color 0.2s;
+}
+
+.footer-links a:hover { color:var(--text); }
+
+.footer-copy {
+    font-size:12px;
+    color:var(--muted);
+}
+
+.footer-copy a {
+    color:var(--muted);
+    text-decoration:none;
+    transition:color 0.2s;
+}
+
+.footer-copy a:hover { color:var(--green); }
+
+/* RESPONSIVE - MOBILE */
+@media (max-width:768px) {
+    .hero { padding:40px 20px 28px; }
+    .hero-icon { font-size:48px; }
+    .hero h1 { font-size:32px; }
+    .hero .subtitle { font-size:16px; margin-bottom:20px; }
+    .cta-btn { font-size:14px; padding:14px 28px; }
+    .hero-note { font-size:13px; }
+    
+    .gallery-container { width:280px; }
+    .gallery-slide { height:420px; }
+    .gallery-slide .big-number { font-size:48px; }
+    .gallery-slide .huge-name { font-size:24px; }
+    
+    .features-grid { grid-template-columns:repeat(4, 1fr); gap:8px; }
+    .feature { padding:10px 4px; }
+    .feature-icon { font-size:22px; }
+    .feature-title { font-size:9px; }
+    
+    .step { flex-direction:column; gap:8px; }
+    .step-num { min-width:auto; font-size:20px; }
+    .step-content h3 { font-size:14px; }
+    .step-content p { font-size:14px; }
+    .code-block { font-size:11px; padding:12px 14px; }
+    
+    .container { padding:0 16px; }
+    .section-label { font-size:12px; }
+    .privacy-text { font-size:14px; }
+}
+
+/* DESKTOP */
+@media (min-width:769px) {
+    .features-grid { grid-template-columns:repeat(8, 1fr); }
+    .gallery-container { width:580px; }
+    .gallery-slide { height:480px; padding:28px 32px; }
+    .gallery-slide .slide-icon { font-size:56px; }
+    .gallery-slide h2 { font-size:32px; }
+    .gallery-slide .slide-label { font-size:12px; }
+    .gallery-slide .slide-text { font-size:18px; }
+    .gallery-slide .big-number { font-size:80px; }
+    .gallery-slide .huge-name { font-size:38px; }
+    .gallery-slide .personality-type { font-size:24px; }
+    .gallery-slide .roast { font-size:15px; }
+    .gallery-slide .badge { font-size:12px; padding:8px 16px; }
+    .gallery-nav { font-size:28px; padding:20px; }
+    .gallery-dot { width:10px; height:10px; }
+    .gallery-progress { padding:16px 0; gap:8px; }
+}
+</style>
+</head>
+<body>
+
+<section class="hero">
+    <div class="hero-icon">📱</div>
+    <h1>iMESSAGE WRAPPED</h1>
+    <p class="subtitle">your 2025 texting habits, exposed</p>
+    <div class="cta-buttons">
+        <a href="https://raw.githubusercontent.com/kothari-nikunj/wrap2025/main/imessage_wrapped.py" download class="cta-btn download-btn">
+            <span>⬇️</span>
+            <span>Download Script</span>
+        </a>
+        <button onclick="shareLink()" class="cta-btn share-btn">
+            <span>📤</span>
+            <span>Send to Your Mac</span>
+        </button>
+    </div>
+    <p class="hero-note download-btn">macOS only • 100% local • ~30 seconds</p>
+    <p class="mobile-note">Requires a Mac to run. Send yourself this link!</p>
+</section>
+
+<section class="preview-section">
+    <div class="container">
+        <div class="section-label">// WHAT YOU'LL SEE</div>
+        
+        <div class="gallery-wrapper">
+            <div class="gallery-container">
+                <div class="gallery-nav prev" onclick="galleryPrev()">‹</div>
+                <div class="gallery-nav next" onclick="galleryNext()">›</div>
+                
+                <div class="gallery-viewport">
+                    <div class="gallery-track" id="galleryTrack">
+                        <!-- Intro -->
+                        <div class="gallery-slide intro">
+                            <div class="slide-icon">📱</div>
+                            <h2>iMESSAGE<br>WRAPPED</h2>
+                            <p class="slide-text">your 2025 texting habits, exposed</p>
+                        </div>
+                        
+                        <!-- Total -->
+                        <div class="gallery-slide">
+                            <div class="slide-label">// TOTAL DAMAGE</div>
+                            <div class="big-number green">47,832</div>
+                            <div class="slide-text">messages this year</div>
+                        </div>
+                        
+                        <!-- #1 -->
+                        <div class="gallery-slide pink-bg">
+                            <div class="slide-label">// YOUR #1</div>
+                            <div class="slide-text">most texted person</div>
+                            <div class="huge-name pink">Alex Chen</div>
+                            <div class="big-number yellow">11,247</div>
+                            <div class="slide-text">messages</div>
+                        </div>
+                        
+                        <!-- Personality -->
+                        <div class="gallery-slide purple-bg">
+                            <div class="slide-label">// DIAGNOSIS</div>
+                            <div class="slide-text">texting personality</div>
+                            <div class="personality-type">NOCTURNAL MENACE</div>
+                            <div class="roast">"terrorizes people at ungodly hours"</div>
+                        </div>
+                        
+                        <!-- Who texts first -->
+                        <div class="gallery-slide">
+                            <div class="slide-label">// WHO TEXTS FIRST</div>
+                            <div class="slide-text">conversation initiator</div>
+                            <div class="big-number yellow">38<span class="pct">%</span></div>
+                            <div class="slide-text">of convos started by you</div>
+                            <div class="badge yellow">THEY START</div>
+                        </div>
+                        
+                        <!-- Busiest Day -->
+                        <div class="gallery-slide orange-bg">
+                            <div class="slide-label">// BUSIEST DAY</div>
+                            <div class="slide-text">your most unhinged day</div>
+                            <div class="big-number orange">Mar 15</div>
+                            <div class="slide-text"><span class="yellow">523</span> messages</div>
+                            <div class="roast">what happened??</div>
+                        </div>
+                        
+                        <!-- Response -->
+                        <div class="gallery-slide">
+                            <div class="slide-label">// RESPONSE TIME</div>
+                            <div class="slide-text">avg reply</div>
+                            <div class="big-number yellow">23</div>
+                            <div class="slide-text">minutes</div>
+                            <div class="badge yellow">NORMAL</div>
+                        </div>
+                        
+                        <!-- 3AM -->
+                        <div class="gallery-slide">
+                            <div class="slide-label">// 3AM BESTIE</div>
+                            <div class="slide-icon">🌙</div>
+                            <div class="huge-name cyan">Jordan Lee</div>
+                            <div class="big-number yellow">147</div>
+                            <div class="slide-text">late night texts</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="gallery-progress" id="galleryProgress"></div>
+            </div>
+        </div>
+        
+        <div class="gallery-hint">tap or swipe to preview</div>
+    </div>
+</section>
+
+<section class="features">
+    <div class="container">
+        <div class="section-label">// ALL STATS</div>
+        <div class="features-grid">
+            <div class="feature">
+                <div class="feature-icon">📊</div>
+                <div class="feature-title">MESSAGES</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">👑</div>
+                <div class="feature-title">TOP 5</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🧠</div>
+                <div class="feature-title">PERSONALITY</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⏱️</div>
+                <div class="feature-title">RESPONSE</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🌙</div>
+                <div class="feature-title">3AM BESTIE</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔥</div>
+                <div class="feature-title">HEATING UP</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">👻</div>
+                <div class="feature-title">GHOSTED</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">😍</div>
+                <div class="feature-title">DOWN BAD</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="install-section" id="install">
+    <div class="container">
+        <div class="section-label">// HOW TO RUN</div>
+        
+        <div class="install-steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-content">
+                    <h3>Download the script</h3>
+                    <p>Click the button above, or:</p>
+                    <div class="code-block">
+                        <code>curl -O https://raw.githubusercontent.com/kothari-nikunj/wrap2025/main/imessage_wrapped.py</code>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-content">
+                    <h3>Grant Terminal access</h3>
+                    <p>System Settings → Privacy & Security → Full Disk Access → add Terminal</p>
+                </div>
+            </div>
+            
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-content">
+                    <h3>Run it</h3>
+                    <div class="code-block">
+                        <code>python3 imessage_wrapped.py</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️</strong> Not enough 2025 messages? Use <code>--use-2024</code> flag.
+        </div>
+    </div>
+</section>
+
+<section class="privacy-section">
+    <div class="container">
+        <div class="section-label">// PRIVACY</div>
+        <p class="privacy-text">
+            Runs 100% locally. No servers, no uploads, no tracking.
+        </p>
+        <div class="privacy-badges">
+            <div class="privacy-badge">
+                <span class="privacy-badge-icon">🔒</span>
+                <span>Local Only</span>
+            </div>
+            <div class="privacy-badge">
+                <span class="privacy-badge-icon">📖</span>
+                <span>Open Source</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="container">
+        <div class="footer-logo">wrap2025.com</div>
+        <div class="footer-links">
+            <a href="https://github.com/kothari-nikunj/wrap2025">GitHub</a>
+            <a href="#install">Install</a>
+        </div>
+        <div class="footer-copy">
+            made by <a href="https://x.com/nikunj" target="_blank">@nikunj</a> • not affiliated with Apple or Spotify
+        </div>
+    </div>
+</footer>
+
+<script>
+// Gallery
+const track = document.getElementById('galleryTrack');
+const progressEl = document.getElementById('galleryProgress');
+const slides = track.children;
+const total = slides.length;
+let current = 0;
+
+for (let i = 0; i < total; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'gallery-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => goTo(i);
+    progressEl.appendChild(dot);
+}
+const dots = progressEl.querySelectorAll('.gallery-dot');
+
+function goTo(idx) {
+    if (idx < 0) idx = total - 1;
+    if (idx >= total) idx = 0;
+    current = idx;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+}
+
+function galleryNext() { goTo(current + 1); }
+function galleryPrev() { goTo(current - 1); }
+
+const container = document.querySelector('.gallery-viewport');
+let startX = 0;
+let isDragging = false;
+
+container.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    isDragging = true;
+});
+
+container.addEventListener('touchend', (e) => {
+    if (!isDragging) return;
+    const diff = startX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+        if (diff > 0) galleryNext();
+        else galleryPrev();
+    }
+    isDragging = false;
+});
+
+container.addEventListener('click', (e) => {
+    const rect = container.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    if (x < 0.3) galleryPrev();
+    else if (x > 0.7) galleryNext();
+});
+
+setInterval(() => galleryNext(), 4000);
+
+// Share functionality for mobile
+async function shareLink() {
+    const shareData = {
+        title: 'iMessage Wrapped 2025',
+        text: 'See your 2025 texting stats! Run this on your Mac:',
+        url: 'https://wrap2025.com'
+    };
+    
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err) {
+            // User cancelled or error
+            console.log('Share cancelled');
+        }
+    } else {
+        // Fallback: copy to clipboard
+        try {
+            await navigator.clipboard.writeText('https://wrap2025.com');
+            alert('Link copied! Send it to yourself to run on your Mac.');
+        } catch (err) {
+            alert('Visit wrap2025.com on your Mac to run this.');
+        }
+    }
+}
+</script>
+
+</body>
+</html>
