@@ -455,6 +455,8 @@ def gen_html(d, contacts, path):
             <div class="stat-item"><span class="stat-num">{s[1]:,}</span><span class="stat-lbl">sent</span></div>
             <div class="stat-item"><span class="stat-num">{s[2]:,}</span><span class="stat-lbl">received</span></div>
         </div>
+        <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_total_messages.png', this)">📸 Save</button>
+        <div class="slide-watermark">wrap2025.com</div>
     </div>''')
     
     # Slide 3: Words sent
@@ -467,6 +469,8 @@ def gen_html(d, contacts, path):
         <div class="big-number cyan">{words_display}</div>
         <div class="slide-text">words you typed</div>
         <div class="roast">that's about {pages:,} pages of a novel</div>
+        <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_word_count.png', this)">📸 Save</button>
+        <div class="slide-watermark">wrap2025.com</div>
     </div>''')
     
     # Slide 4: Your #1 (only if we have contacts)
@@ -478,6 +482,8 @@ def gen_html(d, contacts, path):
             <div class="huge-name">{n(top[0][0])}</div>
             <div class="big-number yellow">{top[0][1]:,}</div>
             <div class="slide-text">messages</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_your_number_one.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
         # Slide 5: Top 5
@@ -487,6 +493,8 @@ def gen_html(d, contacts, path):
             <div class="slide-label">// INNER CIRCLE</div>
             <div class="slide-text">your top 5</div>
             <div class="rank-list">{top5_html}</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_inner_circle.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
     
     # === GROUP CHAT SLIDES (after top 5, before personality) ===
@@ -510,6 +518,8 @@ def gen_html(d, contacts, path):
                 <div class="stat-item"><span class="stat-num">{round(gs['sent']/max(gs['total'],1)*100)}%</span><span class="stat-lbl">yours</span></div>
             </div>
             <div class="badge {lurker_class}">{lurker_label}</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_group_chats.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
         # Slide 7: Group Chat Leaderboard
@@ -536,6 +546,8 @@ def gen_html(d, contacts, path):
                 <div class="slide-label">// TOP GROUP CHATS</div>
                 <div class="slide-text">your most active groups</div>
                 <div class="rank-list">{gc_html}</div>
+                <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_top_groups.png', this)">📸 Save</button>
+                <div class="slide-watermark">wrap2025.com</div>
             </div>''')
 
     # Slide 8: Personality
@@ -545,6 +557,8 @@ def gen_html(d, contacts, path):
         <div class="slide-text">texting personality</div>
         <div class="personality-type">{ptype}</div>
         <div class="roast">"{proast}"</div>
+        <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_personality.png', this)">📸 Save</button>
+        <div class="slide-watermark">wrap2025.com</div>
     </div>''')
 
     # Slide 9: Conversation Starter (Who texts first)
@@ -557,6 +571,8 @@ def gen_html(d, contacts, path):
         <div class="big-number {starter_class}">{d['starter_pct']}<span class="pct">%</span></div>
         <div class="slide-text">of convos started by you</div>
         <div class="badge {starter_class}">{starter_label}</div>
+        <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_who_texts_first.png', this)">📸 Save</button>
+        <div class="slide-watermark">wrap2025.com</div>
     </div>''')
 
     # Slide 10: Response time
@@ -569,6 +585,8 @@ def gen_html(d, contacts, path):
         <div class="big-number {resp_class}">{d['resp']}</div>
         <div class="slide-text">minutes</div>
         <div class="badge {resp_class}">{resp_label}</div>
+        <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_response_time.png', this)">📸 Save</button>
+        <div class="slide-watermark">wrap2025.com</div>
     </div>''')
 
     # Slide 11: Peak hours
@@ -578,6 +596,8 @@ def gen_html(d, contacts, path):
         <div class="slide-text">most active</div>
         <div class="big-number green">{hr_str}</div>
         <div class="slide-text">on <span class="yellow">{d['day']}s</span></div>
+        <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_peak_hours.png', this)">📸 Save</button>
+        <div class="slide-watermark">wrap2025.com</div>
     </div>''')
 
     # Slide 12: 3AM Bestie
@@ -590,6 +610,8 @@ def gen_html(d, contacts, path):
             <div class="huge-name cyan">{n(ln[0])}</div>
             <div class="big-number yellow">{ln[1]}</div>
             <div class="slide-text">late night texts</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_3am_bestie.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
     # Slide 13: Busiest Day
@@ -601,6 +623,8 @@ def gen_html(d, contacts, path):
             <div class="big-number orange">{busiest_str}</div>
             <div class="slide-text"><span class="yellow">{busiest_count:,}</span> messages in one day</div>
             <div class="roast">what happened??</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_busiest_day.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
     # Slide 14: Biggest fan
@@ -613,6 +637,8 @@ def gen_html(d, contacts, path):
             <div class="slide-text">texts you most</div>
             <div class="huge-name orange">{n(f[0])}</div>
             <div class="slide-text"><span class="big-number yellow" style="font-size:56px">{ratio}x</span> more than you</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_biggest_fan.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
     # Slide 15: Down bad
@@ -625,6 +651,8 @@ def gen_html(d, contacts, path):
             <div class="slide-text">you simp for</div>
             <div class="huge-name">{n(si[0])}</div>
             <div class="slide-text">you text <span class="big-number yellow" style="font-size:56px">{ratio}x</span> more</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_down_bad.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
     # Slide 16: Heating Up
@@ -635,6 +663,8 @@ def gen_html(d, contacts, path):
             <div class="slide-label">// HEATING UP</div>
             <div class="slide-text">getting stronger in H2</div>
             <div class="rank-list">{heat_html}</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_heating_up.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
     # Slide 17: Ghosted
@@ -645,7 +675,9 @@ def gen_html(d, contacts, path):
             <div class="slide-label">// GHOSTED</div>
             <div class="slide-text">they chose peace</div>
             <div class="rank-list">{ghost_html}</div>
-            <div class="roast">before June → after</div>
+            <div class="roast" style="margin-top:16px;">before June → after</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_ghosted.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
     # Slide 18: Emojis
@@ -656,6 +688,8 @@ def gen_html(d, contacts, path):
             <div class="slide-label">// EMOJIS</div>
             <div class="slide-text">your emotional range</div>
             <div class="emoji-row">{emo}</div>
+            <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_emojis.png', this)">📸 Save</button>
+            <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
     # Final slide: Summary card
@@ -771,7 +805,7 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 .slide.summary-slide {{ background:linear-gradient(145deg,#0f2847 0%,#12121f 50%,#1a1a2e 100%); }}
 
 .slide h1 {{ font-family:var(--font-pixel); font-size:36px; font-weight:400; line-height:1.2; margin:20px 0; }}
-.slide-label {{ font-family:var(--font-pixel); font-size:10px; font-weight:400; color:var(--green); letter-spacing:0.5px; margin-bottom:16px; }}
+.slide-label {{ font-family:var(--font-pixel); font-size:12px; font-weight:400; color:var(--green); letter-spacing:0.5px; margin-bottom:16px; }}
 .slide-icon {{ font-size:80px; margin-bottom:16px; }}
 .slide-text {{ font-size:18px; color:var(--muted); margin:8px 0; }}
 .subtitle {{ font-size:18px; color:var(--muted); margin-top:8px; }}
@@ -1010,6 +1044,22 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 .btn-icon {{ font-size:20px; }}
 .share-hint {{ font-size:14px; color:var(--muted); margin-top:16px; }}
 
+.slide-save-btn {{
+    position:absolute; bottom:100px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    font-family:var(--font-pixel); font-size:9px; font-weight:400; text-transform:uppercase; letter-spacing:0.3px;
+    background:rgba(74,222,128,0.15); color:var(--green); border:1px solid rgba(74,222,128,0.3);
+    padding:10px 20px; border-radius:8px;
+    cursor:pointer; transition:all 0.2s; opacity:0;
+}}
+.slide.active .slide-save-btn {{ opacity:1; }}
+.slide-save-btn:hover {{ background:rgba(74,222,128,0.25); border-color:var(--green); }}
+.slide-watermark {{
+    position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
+    font-family:var(--font-pixel); font-size:10px; color:var(--green); opacity:0.6;
+    display:none;
+}}
+
 .progress {{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:100; }}
 .dot {{ width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,0.2); transition:all 0.3s; cursor:pointer; }}
 .dot:hover {{ background:rgba(255,255,255,0.4); }}
@@ -1083,7 +1133,7 @@ async function takeScreenshot() {{
     try {{
         const canvas = await html2canvas(card, {{ backgroundColor:'#0f1a2e', scale:2, logging:false, useCORS:true }});
         const link = document.createElement('a');
-        link.download = 'imessage_wrapped_2025.png';
+        link.download = 'imessage_wrapped_2025_summary.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
         btn.innerHTML = '<span class="btn-icon">✓</span><span>Saved!</span>';
@@ -1092,6 +1142,42 @@ async function takeScreenshot() {{
         btn.innerHTML = '<span class="btn-icon">📸</span><span>Save Screenshot</span>';
         btn.disabled = false;
     }}
+}}
+
+async function saveSlide(slideEl, filename, btn) {{
+    btn.innerHTML = '⏳';
+    btn.disabled = true;
+
+    // Show watermark for screenshot
+    const watermark = slideEl.querySelector('.slide-watermark');
+    if (watermark) watermark.style.display = 'block';
+
+    // Hide the save button temporarily
+    btn.style.opacity = '0';
+
+    try {{
+        const canvas = await html2canvas(slideEl, {{
+            backgroundColor: null,
+            scale: 2,
+            logging: false,
+            useCORS: true,
+            width: slideEl.offsetWidth,
+            height: slideEl.offsetHeight
+        }});
+        const link = document.createElement('a');
+        link.download = filename;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        btn.innerHTML = '✓';
+        setTimeout(() => {{ btn.innerHTML = '📸 Save'; btn.disabled = false; btn.style.opacity = '1'; }}, 2000);
+    }} catch (err) {{
+        btn.innerHTML = '📸 Save';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+    }}
+
+    // Hide watermark again
+    if (watermark) watermark.style.display = 'none';
 }}
 
 goTo(0);
