@@ -100,7 +100,9 @@ def q(sql):
 
 def analyze(ts_start, ts_jun):
     d = {}
-    d['stats'] = q(f"SELECT COUNT(*), SUM(CASE WHEN is_from_me=1 THEN 1 ELSE 0 END), SUM(CASE WHEN is_from_me=0 THEN 1 ELSE 0 END), COUNT(DISTINCT handle_id) FROM message WHERE (date/1000000000+978307200)>{ts_start}")[0]
+    # Stats: handle NULL from SUM when 0 messages
+    raw_stats = q(f"SELECT COUNT(*), SUM(CASE WHEN is_from_me=1 THEN 1 ELSE 0 END), SUM(CASE WHEN is_from_me=0 THEN 1 ELSE 0 END), COUNT(DISTINCT handle_id) FROM message WHERE (date/1000000000+978307200)>{ts_start}")[0]
+    d['stats'] = (raw_stats[0] or 0, raw_stats[1] or 0, raw_stats[2] or 0, raw_stats[3] or 0)
     d['top'] = q(f"SELECT h.id, COUNT(*) t, SUM(CASE WHEN m.is_from_me=1 THEN 1 ELSE 0 END), SUM(CASE WHEN m.is_from_me=0 THEN 1 ELSE 0 END) FROM message m JOIN handle h ON m.handle_id=h.ROWID WHERE (m.date/1000000000+978307200)>{ts_start} GROUP BY h.id ORDER BY t DESC LIMIT 20")
     d['late'] = q(f"SELECT h.id, COUNT(*) n FROM message m JOIN handle h ON m.handle_id=h.ROWID WHERE (m.date/1000000000+978307200)>{ts_start} AND CAST(strftime('%H',datetime((m.date/1000000000+978307200),'unixepoch','localtime')) AS INT)<5 GROUP BY h.id HAVING n>5 ORDER BY n DESC LIMIT 5")
     
@@ -175,8 +177,9 @@ def analyze(ts_start, ts_jun):
         FROM convos 
         WHERE prev_ts IS NULL OR (ts - prev_ts) > 14400
     """)
-    if r and r[0][1] > 0:
-        d['starter_pct'] = round((r[0][0] / r[0][1]) * 100)
+    if r and r[0][1] and r[0][1] > 0:
+        you_started = r[0][0] or 0
+        d['starter_pct'] = round((you_started / r[0][1]) * 100)
     else:
         d['starter_pct'] = 50
     
@@ -199,20 +202,34 @@ def gen_html(d, contacts, path):
     n = lambda h: get_name(h, contacts)
     ptype, proast = d['personality']
     hr = d['hour']
-    hr_str = f"{hr}AM" if hr < 12 else f"{hr-12 if hr > 12 else 12}PM"
+    # Format hour: 0->12AM, 1-11->AM, 12->12PM, 13-23->PM
+    if hr == 0:
+        hr_str = "12AM"
+    elif hr < 12:
+        hr_str = f"{hr}AM"
+    elif hr == 12:
+        hr_str = "12PM"
+    else:
+        hr_str = f"{hr-12}PM"
     
     # Format busiest day
+    from datetime import datetime as dt
     if d['busiest_day']:
-        from datetime import datetime as dt
         bd = dt.strptime(d['busiest_day'][0], '%Y-%m-%d')
         busiest_str = bd.strftime('%b %d')
         busiest_count = d['busiest_day'][1]
     else:
         busiest_str = "N/A"
         busiest_count = 0
-    
+
+    # Calculate days elapsed in the year for accurate per-day stats
+    now = dt.now()
+    year_start = dt(now.year, 1, 1)
+    days_elapsed = max(1, (now - year_start).days)  # At least 1 to avoid div by zero
+    msgs_per_day = s[0] // days_elapsed
+
     slides = []
-    
+
     # Slide 1: Intro
     slides.append('''
     <div class="slide intro">
@@ -221,7 +238,7 @@ def gen_html(d, contacts, path):
         <p class="subtitle">your 2025 texting habits, exposed</p>
         <div class="tap-hint">click anywhere to start →</div>
     </div>''')
-    
+
     # Slide 2: Total messages
     slides.append(f'''
     <div class="slide">
@@ -229,7 +246,7 @@ def gen_html(d, contacts, path):
         <div class="big-number green">{s[0]:,}</div>
         <div class="slide-text">messages this year</div>
         <div class="stat-grid">
-            <div class="stat-item"><span class="stat-num">{s[0]//365}</span><span class="stat-lbl">/day</span></div>
+            <div class="stat-item"><span class="stat-num">{msgs_per_day}</span><span class="stat-lbl">/day</span></div>
             <div class="stat-item"><span class="stat-num">{s[1]:,}</span><span class="stat-lbl">sent</span></div>
             <div class="stat-item"><span class="stat-num">{s[2]:,}</span><span class="stat-lbl">received</span></div>
         </div>
@@ -247,24 +264,25 @@ def gen_html(d, contacts, path):
         <div class="roast">that's about {pages:,} pages of a novel</div>
     </div>''')
     
-    # Slide 4: Your #1
-    slides.append(f'''
-    <div class="slide pink-bg">
-        <div class="slide-label">// YOUR #1</div>
-        <div class="slide-text">most texted person</div>
-        <div class="huge-name">{n(top[0][0])}</div>
-        <div class="big-number yellow">{top[0][1]:,}</div>
-        <div class="slide-text">messages</div>
-    </div>''')
-    
-    # Slide 5: Top 5
-    top5_html = ''.join([f'<div class="rank-item"><span class="rank-num">{i}</span><span class="rank-name">{n(h)}</span><span class="rank-count">{t:,}</span></div>' for i,(h,t,_,_) in enumerate(top[:5],1)])
-    slides.append(f'''
-    <div class="slide">
-        <div class="slide-label">// INNER CIRCLE</div>
-        <div class="slide-text">your top 5</div>
-        <div class="rank-list">{top5_html}</div>
-    </div>''')
+    # Slide 4: Your #1 (only if we have contacts)
+    if top:
+        slides.append(f'''
+        <div class="slide pink-bg">
+            <div class="slide-label">// YOUR #1</div>
+            <div class="slide-text">most texted person</div>
+            <div class="huge-name">{n(top[0][0])}</div>
+            <div class="big-number yellow">{top[0][1]:,}</div>
+            <div class="slide-text">messages</div>
+        </div>''')
+
+        # Slide 5: Top 5
+        top5_html = ''.join([f'<div class="rank-item"><span class="rank-num">{i}</span><span class="rank-name">{n(h)}</span><span class="rank-count">{t:,}</span></div>' for i,(h,t,_,_) in enumerate(top[:5],1)])
+        slides.append(f'''
+        <div class="slide">
+            <div class="slide-label">// INNER CIRCLE</div>
+            <div class="slide-text">your top 5</div>
+            <div class="rank-list">{top5_html}</div>
+        </div>''')
     
     # Slide 6: Personality
     slides.append(f'''
@@ -387,7 +405,7 @@ def gen_html(d, contacts, path):
         </div>''')
     
     # Final slide: Summary card
-    top3_names = ', '.join([n(h) for h,_,_,_ in top[:3]])
+    top3_names = ', '.join([n(h) for h,_,_,_ in top[:3]]) if top else "No contacts"
     slides.append(f'''
     <div class="slide summary-slide">
         <div class="summary-card" id="summaryCard">
