@@ -18,6 +18,7 @@ Your texting habits, exposed. A Spotify Wrapped-style visualization of your iMes
 - **Who texts first** - conversation initiator %
 - **Group chat stats** - your group chat activity overview
 - **Top group chats** - your most active group conversations
+- **Contribution graph** - GitHub-style activity heatmap of your messaging throughout the year
 
 ## Installation
 

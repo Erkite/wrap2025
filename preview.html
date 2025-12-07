@@ -686,6 +686,29 @@ body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(-
 .nav.prev { left:8px; }
 .nav.next { right:8px; }
 .nav.hidden { opacity:0; pointer-events:none; }
+
+/* Contribution Graph Styles */
+.slide.contrib-slide { background:linear-gradient(145deg,#12121f 0%,#0f1f2d 100%); padding:24px 16px 80px; }
+.contrib-graph { display:flex; flex-direction:column; align-items:center; margin:20px auto; padding:0 8px; }
+.contrib-container { display:flex; gap:4px; }
+.contrib-days { display:flex; flex-direction:column; gap:2px; font-size:9px; color:var(--muted); padding-top:20px; min-width:28px; text-align:right; padding-right:4px; }
+.contrib-days span { height:10px; line-height:10px; }
+.contrib-main { display:flex; flex-direction:column; }
+.contrib-months { position:relative; height:16px; font-size:9px; color:var(--muted); margin-bottom:4px; width:624px; }
+.contrib-grid { display:flex; gap:2px; }
+.contrib-week { display:flex; flex-direction:column; gap:2px; }
+.contrib-cell { width:10px; height:10px; border-radius:2px; background:rgba(255,255,255,0.08); }
+.contrib-cell.empty { background:transparent; }
+.contrib-cell.level-0 { background:rgba(255,255,255,0.08); }
+.contrib-cell.level-1 { background:rgba(74,222,128,0.3); }
+.contrib-cell.level-2 { background:rgba(74,222,128,0.5); }
+.contrib-cell.level-3 { background:rgba(74,222,128,0.75); }
+.contrib-cell.level-4 { background:var(--green); }
+.contrib-legend { display:flex; align-items:center; gap:4px; margin-top:12px; font-size:10px; color:var(--muted); }
+.contrib-legend .contrib-cell { width:10px; height:10px; }
+.slide.contrib-slide .stat-grid { margin-top:20px; }
+.slide.contrib-slide.active .contrib-graph { animation: graphReveal 0.6s cubic-bezier(0.22, 1, 0.36, 1) 0.15s forwards; opacity:0; transform:translateY(30px) scale(0.95); }
+@keyframes graphReveal { 0% { opacity:0; transform:translateY(30px) scale(0.95); } 100% { opacity:1; transform:translateY(0) scale(1); } }
 </style>
 </head>
 <body>
@@ -768,7 +791,41 @@ body { font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(-
         </div>
     </div>
 
-    <!-- 8: Personality -->
+    <!-- 8: Contribution Graph -->
+    <div class="slide contrib-slide">
+        <div class="slide-label">// MESSAGE ACTIVITY</div>
+        <div class="slide-text">your texting throughout the year</div>
+        <div class="contrib-graph">
+            <div class="contrib-container">
+                <div class="contrib-days"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+                <div class="contrib-main">
+                    <div class="contrib-months">
+                        <span style="position:absolute;left:0px">Jan</span>
+                        <span style="position:absolute;left:48px">Feb</span>
+                        <span style="position:absolute;left:96px">Mar</span>
+                        <span style="position:absolute;left:144px">Apr</span>
+                        <span style="position:absolute;left:192px">May</span>
+                        <span style="position:absolute;left:240px">Jun</span>
+                        <span style="position:absolute;left:288px">Jul</span>
+                        <span style="position:absolute;left:336px">Aug</span>
+                        <span style="position:absolute;left:384px">Sep</span>
+                        <span style="position:absolute;left:432px">Oct</span>
+                        <span style="position:absolute;left:480px">Nov</span>
+                        <span style="position:absolute;left:528px">Dec</span>
+                    </div>
+                    <div class="contrib-grid" id="contribGrid"></div>
+                </div>
+            </div>
+            <div class="contrib-legend"><span>Less</span><div class="contrib-cell level-0"></div><div class="contrib-cell level-1"></div><div class="contrib-cell level-2"></div><div class="contrib-cell level-3"></div><div class="contrib-cell level-4"></div><span>More</span></div>
+        </div>
+        <div class="stat-grid">
+            <div class="stat-item"><span class="stat-num">131</span><span class="stat-lbl">avg/day</span></div>
+            <div class="stat-item"><span class="stat-num">Mar</span><span class="stat-lbl">busiest</span></div>
+            <div class="stat-item"><span class="stat-num">12</span><span class="stat-lbl">quiet days</span></div>
+        </div>
+    </div>
+
+    <!-- 9: Personality -->
     <div class="slide purple-bg">
         <div class="slide-label">// DIAGNOSIS</div>
         <div class="slide-text">texting personality</div>
@@ -937,7 +994,7 @@ const gallery = document.getElementById('gallery');
 const progressEl = document.getElementById('progress');
 const prevBtn = document.getElementById('prev');
 const nextBtn = document.getElementById('next');
-const total = 19;
+const total = 20;
 let current = 0;
 
 for (let i = 0; i < total; i++) {
@@ -993,6 +1050,37 @@ async function takeScreenshot() {
         btn.disabled = false;
     }
 }
+
+// Generate contribution graph cells with sample data
+(function generateContribGraph() {
+    const grid = document.getElementById('contribGrid');
+    if (!grid) return;
+
+    // Generate 52 weeks of sample data
+    for (let week = 0; week < 52; week++) {
+        const weekDiv = document.createElement('div');
+        weekDiv.className = 'contrib-week';
+
+        for (let day = 0; day < 7; day++) {
+            const cell = document.createElement('div');
+            // Create varied pattern - more activity in certain months
+            const monthFactor = Math.sin((week / 52) * Math.PI * 2 + 1) * 0.5 + 0.5;
+            const random = Math.random();
+            const combined = (monthFactor * 0.6 + random * 0.4);
+
+            let level;
+            if (combined < 0.2) level = 0;
+            else if (combined < 0.4) level = 1;
+            else if (combined < 0.6) level = 2;
+            else if (combined < 0.8) level = 3;
+            else level = 4;
+
+            cell.className = `contrib-cell level-${level}`;
+            weekDiv.appendChild(cell);
+        }
+        grid.appendChild(weekDiv);
+    }
+})();
 
 goTo(0);
 </script>
