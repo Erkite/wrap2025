@@ -303,41 +303,38 @@ def analyze(ts_start, ts_jun):
         sorted_days = sorted(d['daily_counts'].items(), key=lambda x: -x[1])[:5]
         d['top_days'] = sorted_days
 
-        # Calculate current streak and longest streak
-        today = dt.now().date()
-        dates_with_msgs = set(d['daily_counts'].keys())
+        # Average messages per active day
+        d['avg_daily'] = round(sum(all_counts) / max(len(all_counts), 1))
 
-        # Current streak (counting back from today or yesterday)
-        current_streak = 0
-        check_date = today
-        # First check if today has messages, if not start from yesterday
-        if str(check_date) not in dates_with_msgs:
-            check_date = today - timedelta(days=1)
-        while str(check_date) in dates_with_msgs:
-            current_streak += 1
-            check_date -= timedelta(days=1)
-        d['current_streak'] = current_streak
+        # Find busiest month
+        monthly_counts = {}
+        for date_str, count in d['daily_counts'].items():
+            month_key = date_str[:7]  # "2025-03" format
+            monthly_counts[month_key] = monthly_counts.get(month_key, 0) + count
+        if monthly_counts:
+            busiest_month_key = max(monthly_counts, key=monthly_counts.get)
+            d['busiest_month'] = dt.strptime(busiest_month_key, '%Y-%m').strftime('%b')
+            d['busiest_month_count'] = monthly_counts[busiest_month_key]
+        else:
+            d['busiest_month'] = 'N/A'
+            d['busiest_month_count'] = 0
 
-        # Longest streak
-        sorted_dates = sorted([dt.strptime(d_str, '%Y-%m-%d').date() for d_str in dates_with_msgs])
-        longest_streak = 0
-        current = 0
-        prev_date = None
-        for date in sorted_dates:
-            if prev_date and (date - prev_date).days == 1:
-                current += 1
-            else:
-                current = 1
-            longest_streak = max(longest_streak, current)
-            prev_date = date
-        d['longest_streak'] = longest_streak
+        # Calculate quiet days (days with 0 messages in the year so far)
+        first_data_date = min(d['daily_counts'].keys())
+        last_data_date = max(d['daily_counts'].keys())
+        first_dt = dt.strptime(first_data_date, '%Y-%m-%d').date()
+        last_dt = dt.strptime(last_data_date, '%Y-%m-%d').date()
+        total_days_in_range = (last_dt - first_dt).days + 1
+        d['quiet_days'] = total_days_in_range - d['active_days']
     else:
         d['daily_counts'] = {}
         d['max_daily'] = 0
         d['active_days'] = 0
         d['top_days'] = []
-        d['current_streak'] = 0
-        d['longest_streak'] = 0
+        d['avg_daily'] = 0
+        d['busiest_month'] = 'N/A'
+        d['busiest_month_count'] = 0
+        d['quiet_days'] = 0
 
     # === GROUP CHAT STATS ===
     group_chat_cte = """
@@ -474,8 +471,9 @@ def gen_html(d, contacts, path):
     # Slide 4: Contribution Graph (GitHub-style activity heatmap) - Year overview
     if d['daily_counts']:
         from datetime import datetime as dt, timedelta
-        # Determine the year we're analyzing
-        year = now.year
+        # Determine the year from the data (first date in the data)
+        first_data_date = min(d['daily_counts'].keys())
+        year = int(first_data_date[:4])
         year_start = dt(year, 1, 1)
         year_end = dt(year, 12, 31)
 
@@ -559,9 +557,9 @@ def gen_html(d, contacts, path):
             <div class="slide-text">your texting throughout the year</div>
             {contrib_html}
             <div class="contrib-stats">
-                <div class="contrib-stat"><span class="contrib-stat-num">{d['active_days']}</span><span class="contrib-stat-lbl">active days</span></div>
-                <div class="contrib-stat"><span class="contrib-stat-num">{d['current_streak']}</span><span class="contrib-stat-lbl">current streak</span></div>
-                <div class="contrib-stat"><span class="contrib-stat-num">{d['longest_streak']}</span><span class="contrib-stat-lbl">longest streak</span></div>
+                <div class="contrib-stat"><span class="contrib-stat-num">{d['avg_daily']}</span><span class="contrib-stat-lbl">avg/day</span></div>
+                <div class="contrib-stat"><span class="contrib-stat-num">{d['busiest_month']}</span><span class="contrib-stat-lbl">busiest month</span></div>
+                <div class="contrib-stat"><span class="contrib-stat-num">{d['quiet_days']}</span><span class="contrib-stat-lbl">quiet days</span></div>
             </div>
             <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_contribution_graph.png', this)">📸 Save</button>
             <div class="slide-watermark">wrap2025.com</div>
@@ -833,8 +831,10 @@ def gen_html(d, contacts, path):
 <title>WhatsApp Wrapped 2025</title>
 <link rel="icon" href="{favicon}">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Silkscreen&family=Azeret+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Silkscreen&family=Azeret+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap');
 
 :root {{
     --bg: #0a0a12;
@@ -1280,6 +1280,16 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 }}
 .slide.active .slide-save-btn {{ opacity:1; }}
 .slide-save-btn:hover {{ background:rgba(37,211,102,0.25); border-color:var(--whatsapp); }}
+
+/* Force all elements visible for screenshot capture */
+.slide.capturing,
+.slide.capturing * {{
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    clip-path: none !important;
+}}
 .slide-watermark {{
     position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
     font-family:var(--font-pixel); font-size:10px; color:var(--whatsapp); opacity:0.6;
@@ -1371,12 +1381,24 @@ async function takeScreenshot() {{
 async function saveSlide(slideEl, filename, btn) {{
     btn.innerHTML = '⏳';
     btn.disabled = true;
+
+    // Show watermark for screenshot
     const watermark = slideEl.querySelector('.slide-watermark');
     if (watermark) watermark.style.display = 'block';
-    btn.style.opacity = '0';
+
+    // Hide the save button temporarily
+    btn.style.visibility = 'hidden';
+
+    // Add capturing class to force all animations to final state
+    slideEl.classList.add('capturing');
+
+    // Wait for browser to apply styles
+    await new Promise(r => setTimeout(r, 50));
+
     // Get computed background color (html2canvas has issues with CSS variables)
     const computedBg = getComputedStyle(slideEl).backgroundColor;
     const bgColor = computedBg && computedBg !== 'rgba(0, 0, 0, 0)' ? computedBg : '#0a0a12';
+
     try {{
         const canvas = await html2canvas(slideEl, {{
             backgroundColor: bgColor,
@@ -1391,12 +1413,15 @@ async function saveSlide(slideEl, filename, btn) {{
         link.href = canvas.toDataURL('image/png');
         link.click();
         btn.innerHTML = '✓';
-        setTimeout(() => {{ btn.innerHTML = '📸 Save'; btn.disabled = false; btn.style.opacity = '1'; }}, 2000);
+        setTimeout(() => {{ btn.innerHTML = '📸 Save'; btn.disabled = false; btn.style.visibility = 'visible'; }}, 2000);
     }} catch (err) {{
         btn.innerHTML = '📸 Save';
         btn.disabled = false;
-        btn.style.opacity = '1';
+        btn.style.visibility = 'visible';
     }}
+
+    // Remove capturing class and hide watermark
+    slideEl.classList.remove('capturing');
     if (watermark) watermark.style.display = 'none';
 }}
 
