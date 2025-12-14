@@ -53,7 +53,7 @@ def normalize_phone(phone):
     digits = re.sub(r'\D', '', str(phone))
     # Handle common international prefixes
     if len(digits) == 11 and digits.startswith('1'):
-        digits = digits[1:]  # US/Canada +1
+        digits = digits[1:]
     elif len(digits) > 10:
         # For international numbers, store full digits for exact matching
         return digits
