@@ -17,7 +17,7 @@ class Spinner:
         i = 0
         while self.spinning:
             frame = self.frames[i % len(self.frames)]
-            print(f"\r    {frame} {self.message}", end='', flush=True)
+            print(f"\r    {frame} {self.message}", end='', flush=True)
             time.sleep(0.1)
             i += 1
 
@@ -33,7 +33,7 @@ class Spinner:
         if self.thread:
             self.thread.join()
         if final_message:
-            print(f"\r    ✓ {final_message}".ljust(60))
+            print(f"\r    ✓ {final_message}".ljust(60))
         else:
             print()
 
@@ -109,8 +109,8 @@ def check_access():
         conn.execute("SELECT 1 FROM message LIMIT 1")
         conn.close()
     except:
-        print("\n⚠️  ACCESS DENIED")
-        print("   System Settings → Privacy & Security → Full Disk Access → Add Terminal")
+        print("\n⚠️  ACCESS DENIED")
+        print("   System Settings → Privacy & Security → Full Disk Access → Add Terminal")
         subprocess.run(['open', 'x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles'])
         sys.exit(1)
 
@@ -361,8 +361,7 @@ def analyze(ts_start, ts_jun):
     if d['group_leaderboard']:
         top_group_id = d['group_leaderboard'][0]['chat_id']
         
-        # 1. Get raw sender IDs and message counts for all members
-        raw_senders = q(f"""
+        r_senders = q(f"""
             SELECT 
                 CASE WHEN m.is_from_me = 1 THEN 'You' ELSE h.id END AS sender_id, 
                 COUNT(*) AS msg_count
@@ -375,29 +374,8 @@ def analyze(ts_start, ts_jun):
             ORDER BY msg_count DESC 
         """)
         
-        # 2. Map IDs to Contact Names and Merge Duplicates
-        merged_senders = {}
-        # We need access to contacts, but it's not defined here yet. Pass a dummy `contacts` for now, 
-        # and rely on the global variable being set in main and passed to gen_html. 
-        # For the fix, we merge based on the resolved name.
-        
-        # NOTE: Since `analyze` doesn't have the `contacts` dictionary, we resolve the name later in `gen_html`.
-        # To merge here, we must rely on a placeholder name resolved using the simple `get_name` function available.
-
-        # Temporarily use get_name to find the display name and merge counts based on that name.
-        for handle_id, msg_count in raw_senders:
-            # We must use a local contact mapping here to merge duplicates
-            contact_name = get_name(handle_id, {}) 
-            
-            if contact_name not in merged_senders:
-                # Store the actual handle_id as the key handle for later name resolution in gen_html
-                merged_senders[contact_name] = {'id': handle_id, 'msg_count': msg_count, 'display_name': contact_name}
-            else:
-                # Merge the message count for duplicate names
-                merged_senders[contact_name]['msg_count'] += msg_count
-        
-        # Convert back to a list and re-sort by the combined count
-        d['top_group_senders'] = sorted(merged_senders.values(), key=lambda x: -x['msg_count'])
+        for sender_id, msg_count in r_senders:
+            d['top_group_senders'].append({'id': sender_id, 'msg_count': msg_count})
         
     daily_counts = q(f"""
         SELECT DATE(datetime((date/1000000000+978307200),'unixepoch','localtime')) as d, COUNT(*) as c
@@ -661,10 +639,8 @@ def gen_html(d, contacts, path):
             if d['top_group_senders']:
                 top_group_name = format_group_name(d['group_leaderboard'][0])
                 
-                # The name resolution happens here, using the full 'contacts' dictionary 
-                # for the final display names.
                 sender_html = ''.join([
-                    f'<div class="rank-item"><span class="rank-num">#{i+1}</span><span class="rank-name">{s["display_name"]}</span><span class="rank-count green">{s["msg_count"]:,}</span></div>'
+                    f'<div class="rank-item"><span class="rank-num">#{i+1}</span><span class="rank-name">{n(s["id"])}</span><span class="rank-count green">{s["msg_count"]:,}</span></div>'
                     for i, s in enumerate(d['top_group_senders'])
                 ])
                 slides.append(f'''
@@ -798,7 +774,7 @@ def gen_html(d, contacts, path):
         </div>''')
 
     if d['emoji'] and any(e[1] > 0 for e in d['emoji']):
-        emo = '  '.join([e[0] for e in d['emoji'] if e[1] > 0])
+        emo = '  '.join([e[0] for e in d['emoji'] if e[1] > 0])
         slides.append(f'''
         <div class="slide">
             <div class="slide-label">// EMOJIS</div>
@@ -1016,8 +992,8 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 .slide .summary-card,
 .slide .contrib-graph,
 .slide .contrib-stats {{
-    opacity: 0;
-    transform: translateY(20px);
+    opacity: 0;
+    transform: translateY(20px);
 }}
 
 /* Gallery transition */
@@ -1108,191 +1084,191 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 
 /* Slide from diagonal */
 @keyframes labelSlide {{
-    0% {{ opacity: 0; transform: translateY(12px) translateX(-8px); }}
-    100% {{ opacity: 1; transform: translateY(0) translateX(0); }}
+    0% {{ opacity: 0; transform: translateY(12px) translateX(-8px); }}
+    100% {{ opacity: 1; transform: translateY(0) translateX(0); }}
 }}
 
 /* Simple fade up */
 @keyframes textFade {{
-    0% {{ opacity: 0; transform: translateY(15px); }}
-    100% {{ opacity: 1; transform: translateY(0); }}
+    0% {{ opacity: 0; transform: translateY(15px); }}
+    100% {{ opacity: 1; transform: translateY(0); }}
 }}
 
 /* Scale with slight overshoot */
 @keyframes titleReveal {{
-    0% {{ opacity: 0; transform: translateY(25px) scale(0.95); }}
-    70% {{ transform: translateY(-3px) scale(1.01); }}
-    100% {{ opacity: 1; transform: translateY(0) scale(1); }}
+    0% {{ opacity: 0; transform: translateY(25px) scale(0.95); }}
+    70% {{ transform: translateY(-3px) scale(1.01); }}
+    100% {{ opacity: 1; transform: translateY(0) scale(1); }}
 }}
 
 /* Wobble rotation */
 @keyframes iconPop {{
-    0% {{ opacity: 0; transform: translateY(20px) scale(0.4) rotate(-15deg); }}
-    50% {{ transform: translateY(-8px) scale(1.15) rotate(8deg); }}
-    75% {{ transform: translateY(2px) scale(0.95) rotate(-3deg); }}
-    100% {{ opacity: 1; transform: translateY(0) scale(1) rotate(0); }}
+    0% {{ opacity: 0; transform: translateY(20px) scale(0.4) rotate(-15deg); }}
+    50% {{ transform: translateY(-8px) scale(1.15) rotate(8deg); }}
+    75% {{ transform: translateY(2px) scale(0.95) rotate(-3deg); }}
+    100% {{ opacity: 1; transform: translateY(0) scale(1) rotate(0); }}
 }}
 
 /* 3D flip reveal - for impactful numbers */
 @keyframes numberFlip {{
-    0% {{ opacity: 0; transform: perspective(400px) rotateX(-60deg) translateY(20px); }}
-    60% {{ transform: perspective(400px) rotateX(10deg); }}
-    100% {{ opacity: 1; transform: perspective(400px) rotateX(0) translateY(0); }}
+    0% {{ opacity: 0; transform: perspective(400px) rotateX(-60deg) translateY(20px); }}
+    60% {{ transform: perspective(400px) rotateX(10deg); }}
+    100% {{ opacity: 1; transform: perspective(400px) rotateX(0) translateY(0); }}
 }}
 
 /* Soft blur fade - for names */
 @keyframes nameBlur {{
-    0% {{ opacity: 0; transform: translateY(20px); filter: blur(8px); }}
-    100% {{ opacity: 1; transform: translateY(0); filter: blur(0); }}
+    0% {{ opacity: 0; transform: translateY(20px); filter: blur(8px); }}
+    100% {{ opacity: 1; transform: translateY(0); filter: blur(0); }}
 }}
 
 /* Typewriter cursor feel */
 @keyframes roastType {{
-    0% {{ opacity: 0; clip-path: inset(0 100% 0 0); }}
-    100% {{ opacity: 1; clip-path: inset(0 0 0 0); }}
+    0% {{ opacity: 0; clip-path: inset(0 100% 0 0); }}
+    100% {{ opacity: 1; clip-path: inset(0 0 0 0); }}
 }}
 
 /* Stagger fade in - for stat items */
 @keyframes statFade {{
-    0% {{ opacity: 0; transform: translateY(12px); }}
-    100% {{ opacity: 1; transform: translateY(0); }}
+    0% {{ opacity: 0; transform: translateY(12px); }}
+    100% {{ opacity: 1; transform: translateY(0); }}
 }}
 
 /* Horizontal slide - for rank items */
 @keyframes rankSlide {{
-    0% {{ opacity: 0; transform: translateX(-20px); }}
-    100% {{ opacity: 1; transform: translateX(0); }}
+    0% {{ opacity: 0; transform: translateX(-20px); }}
+    100% {{ opacity: 1; transform: translateX(0); }}
 }}
 
 /* Crown drop for #1 */
 @keyframes topRankDrop {{
-    0% {{ opacity: 0; transform: translateY(-30px); }}
-    70% {{ transform: translateY(4px); }}
-    100% {{ opacity: 1; transform: translateY(0); }}
+    0% {{ opacity: 0; transform: translateY(-30px); }}
+    70% {{ transform: translateY(4px); }}
+    100% {{ opacity: 1; transform: translateY(0); }}
 }}
 
 /* Pill stamp - for badges */
 @keyframes badgeStamp {{
-    0% {{ opacity: 0; transform: scale(1.4); }}
-    60% {{ transform: scale(0.95); }}
-    100% {{ opacity: 1; transform: scale(1); }}
+    0% {{ opacity: 0; transform: scale(1.4); }}
+    60% {{ transform: scale(0.95); }}
+    100% {{ opacity: 1; transform: scale(1); }}
 }}
 
 /* Letter spread - for emoji row */
 @keyframes emojiSpread {{
-    0% {{ opacity: 0; letter-spacing: 0px; }}
-    100% {{ opacity: 1; letter-spacing: 20px; }}
+    0% {{ opacity: 0; letter-spacing: 0px; }}
+    100% {{ opacity: 1; letter-spacing: 20px; }}
 }}
 
 /* Clean rise - for cards */
 @keyframes cardRise {{
-    0% {{ opacity: 0; transform: translateY(40px); }}
-    100% {{ opacity: 1; transform: translateY(0); }}
+    0% {{ opacity: 0; transform: translateY(40px); }}
+    100% {{ opacity: 1; transform: translateY(0); }}
 }}
 
 /* Graph reveal - for contribution graph */
 @keyframes graphReveal {{
-    0% {{ opacity: 0; transform: translateY(30px) scale(0.95); }}
-    100% {{ opacity: 1; transform: translateY(0) scale(1); }}
+    0% {{ opacity: 0; transform: translateY(30px) scale(0.95); }}
+    100% {{ opacity: 1; transform: translateY(0) scale(1); }}
 }}
 
 /* Simple slide up */
 @keyframes buttonSlide {{
-    0% {{ opacity: 0; transform: translateY(15px); }}
-    100% {{ opacity: 1; transform: translateY(0); }}
+    0% {{ opacity: 0; transform: translateY(15px); }}
+    100% {{ opacity: 1; transform: translateY(0); }}
 }}
 
 /* Fade only */
 @keyframes hintFade {{
-    0% {{ opacity: 0; }}
-    100% {{ opacity: 1; }}
+    0% {{ opacity: 0; }}
+    100% {{ opacity: 1; }}
 }}
 
 /* Intro slide - spin and glitch */
 @keyframes introIconSpin {{
-    0% {{ opacity: 0; transform: rotate(-180deg) scale(0.3); }}
-    100% {{ opacity: 1; transform: rotate(0) scale(1); }}
+    0% {{ opacity: 0; transform: rotate(-180deg) scale(0.3); }}
+    100% {{ opacity: 1; transform: rotate(0) scale(1); }}
 }}
 
 @keyframes introTitleGlitch {{
-    0% {{ opacity: 0; transform: translateY(15px); filter: blur(6px); }}
-    40% {{ opacity: 0.8; transform: translateY(3px) skewX(-3deg); filter: blur(2px); }}
-    70% {{ transform: translateY(-2px) skewX(2deg); filter: blur(0); }}
-    100% {{ opacity: 1; transform: translateY(0) skewX(0); }}
+    0% {{ opacity: 0; transform: translateY(15px); filter: blur(6px); }}
+    40% {{ opacity: 0.8; transform: translateY(3px) skewX(-3deg); filter: blur(2px); }}
+    70% {{ transform: translateY(-2px) skewX(2deg); filter: blur(0); }}
+    100% {{ opacity: 1; transform: translateY(0) skewX(0); }}
 }}
 
 /* Pink slide - soft glow */
 @keyframes nameGlow {{
-    0% {{ opacity: 0; transform: translateY(15px); filter: blur(4px) brightness(1.3); }}
-    100% {{ opacity: 1; transform: translateY(0); filter: blur(0) brightness(1); }}
+    0% {{ opacity: 0; transform: translateY(15px); filter: blur(4px) brightness(1.3); }}
+    100% {{ opacity: 1; transform: translateY(0); filter: blur(0) brightness(1); }}
 }}
 
 /* Purple slide - glitch chaos */
 @keyframes labelGlitch {{
-    0% {{ opacity: 0; transform: skewX(-5deg); }}
-    50% {{ opacity: 0.7; transform: skewX(3deg); }}
-    100% {{ opacity: 1; transform: skewX(0); }}
+    0% {{ opacity: 0; transform: skewX(-5deg); }}
+    50% {{ opacity: 0.7; transform: skewX(3deg); }}
+    100% {{ opacity: 1; transform: skewX(0); }}
 }}
 
 @keyframes personalityGlitch {{
-    0% {{ opacity: 0; transform: translateY(20px); filter: blur(8px); }}
-    20% {{ opacity: 0.5; transform: translateY(10px) skewX(-8deg); filter: blur(4px); }}
-    40% {{ opacity: 0.7; transform: translateY(5px) skewX(5deg); filter: blur(2px); }}
-    60% {{ opacity: 0.9; transform: translateY(-2px) skewX(-2deg); filter: blur(1px); }}
-    80% {{ transform: skewX(1deg); }}
-    100% {{ opacity: 1; transform: translateY(0) skewX(0); filter: blur(0); }}
+    0% {{ opacity: 0; transform: translateY(20px); filter: blur(8px); }}
+    20% {{ opacity: 0.5; transform: translateY(10px) skewX(-8deg); filter: blur(4px); }}
+    40% {{ opacity: 0.7; transform: translateY(5px) skewX(5deg); filter: blur(2px); }}
+    60% {{ opacity: 0.9; transform: translateY(-2px) skewX(-2deg); filter: blur(1px); }}
+    80% {{ transform: skewX(1deg); }}
+    100% {{ opacity: 1; transform: translateY(0) skewX(0); filter: blur(0); }}
 }}
 
 @keyframes flickerReveal {{
-    0% {{ opacity: 0; }}
-    20% {{ opacity: 0.4; }}
-    35% {{ opacity: 0.1; }}
-    50% {{ opacity: 0.7; }}
-    65% {{ opacity: 0.3; }}
-    80% {{ opacity: 0.9; }}
-    100% {{ opacity: 1; }}
+    0% {{ opacity: 0; }}
+    20% {{ opacity: 0.4; }}
+    35% {{ opacity: 0.1; }}
+    50% {{ opacity: 0.7; }}
+    65% {{ opacity: 0.3; }}
+    80% {{ opacity: 0.9; }}
+    100% {{ opacity: 1; }}
 }}
 
 @keyframes glitchReveal {{
-    0% {{ opacity: 0; transform: translateY(15px); filter: blur(4px); }}
-    50% {{ opacity: 0.8; transform: translateY(3px) skewX(-3deg); filter: blur(1px); }}
-    100% {{ opacity: 1; transform: translateY(0) skewX(0); filter: blur(0); }}
+    0% {{ opacity: 0; transform: translateY(15px); filter: blur(4px); }}
+    50% {{ opacity: 0.8; transform: translateY(3px) skewX(-3deg); filter: blur(1px); }}
+    100% {{ opacity: 1; transform: translateY(0) skewX(0); filter: blur(0); }}
 }}
 
 /* Red slide - dramatic drop */
 @keyframes dramaticDrop {{
-    0% {{ opacity: 0; transform: translateY(-50px); }}
-    70% {{ transform: translateY(5px); }}
-    100% {{ opacity: 1; transform: translateY(0); }}
+    0% {{ opacity: 0; transform: translateY(-50px); }}
+    70% {{ transform: translateY(5px); }}
+    100% {{ opacity: 1; transform: translateY(0); }}
 }}
 
 @keyframes shakeReveal {{
-    0% {{ opacity: 0; transform: translateX(0); }}
-    25% {{ opacity: 0.7; transform: translateX(-6px); }}
-    50% {{ transform: translateX(6px); }}
-    75% {{ transform: translateX(-3px); }}
-    100% {{ opacity: 1; transform: translateX(0); }}
+    0% {{ opacity: 0; transform: translateX(0); }}
+    25% {{ opacity: 0.7; transform: translateX(-6px); }}
+    50% {{ transform: translateX(6px); }}
+    75% {{ transform: translateX(-3px); }}
+    100% {{ opacity: 1; transform: translateX(0); }}
 }}
 
 /* Orange slide - glow rise */
 @keyframes fireLabel {{
-    0% {{ opacity: 0; filter: brightness(1.4); }}
-    100% {{ opacity: 1; filter: brightness(1); }}
+    0% {{ opacity: 0; filter: brightness(1.4); }}
+    100% {{ opacity: 1; filter: brightness(1); }}
 }}
 
 @keyframes glowRise {{
-    0% {{ opacity: 0; transform: translateY(20px); filter: brightness(1.3); }}
-    100% {{ opacity: 1; transform: translateY(0); filter: brightness(1); }}
+    0% {{ opacity: 0; transform: translateY(20px); filter: brightness(1.3); }}
+    100% {{ opacity: 1; transform: translateY(0); filter: brightness(1); }}
 }}
 
 .summary-card {{
-    background:linear-gradient(145deg,#1a1a2e 0%,#0f1a2e 100%);
-    border:2px solid rgba(255,255,255,0.1);
-    border-radius:24px;
-    padding:32px;
-    width:100%;
-    max-width:420px;
-    text-align:center;
+    background:linear-gradient(145deg,#1a1a2e 0%,#0f1a2e 100%);
+    border:2px solid rgba(255,255,255,0.1);
+    border-radius:24px;
+    padding:32px;
+    width:100%;
+    max-width:420px;
+    text-align:center;
 }}
 .summary-header {{ display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:24px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1); }}
 .summary-logo {{ font-size:28px; }}
@@ -1313,11 +1289,11 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 .summary-footer {{ margin-top:20px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1); font-size:11px; color:var(--green); font-family:var(--font-pixel); font-weight:400; }}
 
 .screenshot-btn {{
-    display:flex; align-items:center; justify-content:center; gap:10px;
-    font-family:var(--font-pixel); font-size:10px; font-weight:400; text-transform:uppercase; letter-spacing:0.3px;
-    background:var(--green); color:#000; border:none;
-    padding:16px 32px; border-radius:12px; margin-top:28px;
-    cursor:pointer; transition:transform 0.2s,background 0.2s;
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    font-family:var(--font-pixel); font-size:10px; font-weight:400; text-transform:uppercase; letter-spacing:0.3px;
+    background:var(--green); color:#000; border:none;
+    padding:16px 32px; border-radius:12px; margin-top:28px;
+    cursor:pointer; transition:transform 0.2s,background 0.2s;
 }}
 .screenshot-btn:hover {{ background:#6ee7b7; transform:scale(1.02); }}
 .screenshot-btn:active {{ transform:scale(0.98); }}
@@ -1325,12 +1301,12 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 .share-hint {{ font-size:14px; color:var(--muted); margin-top:16px; }}
 
 .slide-save-btn {{
-    position:absolute; bottom:100px; left:50%; transform:translateX(-50%);
-    display:flex; align-items:center; justify-content:center; gap:8px;
-    font-family:var(--font-pixel); font-size:9px; font-weight:400; text-transform:uppercase; letter-spacing:0.3px;
-    background:rgba(74,222,128,0.15); color:var(--green); border:1px solid rgba(74,222,128,0.3);
-    padding:10px 20px; border-radius:8px;
-    cursor:pointer; transition:all 0.2s; opacity:0;
+    position:absolute; bottom:100px; left:50%; transform:translateX(-50%);
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    font-family:var(--font-pixel); font-size:9px; font-weight:400; text-transform:uppercase; letter-spacing:0.3px;
+    background:rgba(74,222,128,0.15); color:var(--green); border:1px solid rgba(74,222,128,0.3);
+    padding:10px 20px; border-radius:8px;
+    cursor:pointer; transition:all 0.2s; opacity:0;
 }}
 .slide.active .slide-save-btn {{ opacity:1; }}
 .slide-save-btn:hover {{ background:rgba(74,222,128,0.25); border-color:var(--green); }}
@@ -1338,16 +1314,16 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 /* Force all elements visible for screenshot capture */
 .slide.capturing,
 .slide.capturing * {{
-    animation: none !important;
-    opacity: 1 !important;
-    transform: none !important;
-    filter: none !important;
-    clip-path: none !important;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    clip-path: none !important;
 }}
 .slide-watermark {{
-    position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
-    font-family:var(--font-pixel); font-size:10px; color:var(--green); opacity:0.6;
-    display:none;
+    position:absolute; bottom:24px; left:50%; transform:translateX(-50%);
+    font-family:var(--font-pixel); font-size:10px; color:var(--green); opacity:0.6;
+    display:none;
 }}
 
 .progress {{ position:fixed; bottom:24px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:100; }}
@@ -1541,23 +1517,23 @@ def main():
     args = parser.parse_args()
     
     print("\n" + "="*50)
-    print("  iMessage WRAPPED 2025 | wrap2025.com")
+    print("  iMessage WRAPPED 2025 | wrap2025.com")
     print("="*50 + "\n")
     
     print("[*] Checking access...")
     check_access()
-    print("    ✓ OK")
+    print("    ✓ OK")
     
     print("[*] Loading contacts...")
     contacts = extract_contacts()
-    print(f"    ✓ {len(contacts)} indexed")
+    print(f"    ✓ {len(contacts)} indexed")
     
     ts_start, ts_jun = (TS_2024, TS_JUN_2024) if args.use_2024 else (TS_2025, TS_JUN_2025)
     year = "2024" if args.use_2024 else "2025"
     
     test = q(f"SELECT COUNT(*) FROM message WHERE (date/1000000000+978307200)>{TS_2025}")[0][0]
     if test < 100 and not args.use_2024:
-        print(f"    ⚠️  {test} msgs in 2025, using 2024")
+        print(f"    ⚠️  {test} msgs in 2025, using 2024")
         ts_start, ts_jun = TS_2024, TS_JUN_2024
         year = "2024"
     
@@ -1575,7 +1551,7 @@ def main():
     spinner.stop(f"Saved to {args.output}")
     
     subprocess.run(['open', args.output])
-    print("\n  Done! Click through your wrapped.\n")
+    print("\n  Done! Click through your wrapped.\n")
 
 if __name__ == '__main__':
     main()
