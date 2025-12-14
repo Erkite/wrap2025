@@ -82,7 +82,7 @@ def extract_contacts():
     return contacts
 
 def get_name(handle, contacts):
-    # FIX: Handle case where h.id is NULL (NoneType) due to LEFT JOIN
+    # FIX: Check for None (NULL) handles returned by the LEFT JOIN
     if handle is None:
         return "Unknown Sender"
         
@@ -366,7 +366,6 @@ def analyze(ts_start, ts_jun, contacts):
         top_group_id = d['group_leaderboard'][0]['chat_id']
         
         # 1. Get raw sender IDs and message counts for all members
-        # FIX: Use LEFT JOIN to include 'You' messages (m.is_from_me=1) which often have a NULL handle_id.
         raw_senders = q(f"""
             SELECT 
                 CASE WHEN m.is_from_me = 1 THEN 'You' ELSE h.id END AS sender_id, 
@@ -668,7 +667,7 @@ def gen_html(d, contacts, path):
                 <div class="slide whatsapp-bg">
                     <div class="slide-label">// MVP LEADERBOARD</div>
                     <div class="slide-text">all contributors in "{top_group_name}"</div>
-                    <div class="rank-list" style="max-width:480px;">{sender_html}</div>
+                    <div class="rank-list" style="max-width:480px; font-size:14px; padding: 0 8px;">{sender_html}</div>
                     <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_group_mvp.png', this)">📸 Save</button>
                     <div class="slide-watermark">wrap2025.com</div>
                 </div>''')
@@ -1526,53 +1525,4 @@ document.querySelectorAll('.contrib-cell[data-date]').forEach(cell => {{
 
 goTo(0);
 </script>
-</body></html>'''
-    
-    with open(path, 'w') as f: f.write(html)
-    return path
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--output', '-o', default='imessage_wrapped_2025.html')
-    parser.add_argument('--use-2024', action='store_true')
-    args = parser.parse_args()
-    
-    print("\n" + "="*50)
-    print("  iMessage WRAPPED 2025 | wrap2025.com")
-    print("="*50 + "\n")
-    
-    print("[*] Checking access...")
-    check_access()
-    print("    ✓ OK")
-    
-    print("[*] Loading contacts...")
-    contacts = extract_contacts()
-    print(f"    ✓ {len(contacts)} indexed")
-    
-    ts_start, ts_jun = (TS_2024, TS_JUN_2024) if args.use_2024 else (TS_2025, TS_JUN_2025)
-    year = "2024" if args.use_2024 else "2025"
-    
-    test = q(f"SELECT COUNT(*) FROM message WHERE (date/1000000000+978307200)>{TS_2025}")[0][0]
-    if test < 100 and not args.use_2024:
-        print(f"    ⚠️  {test} msgs in 2025, using 2024")
-        ts_start, ts_jun = TS_2024, TS_JUN_2024
-        year = "2024"
-    
-    spinner = Spinner()
-
-    print(f"[*] Analyzing {year}...")
-    spinner.start("Reading message database...")
-    data = analyze(ts_start, ts_jun, contacts)
-    data['year'] = int(year)
-    spinner.stop(f"{data['stats'][0]:,} messages analyzed")
-
-    print(f"[*] Generating report...")
-    spinner.start("Building your wrapped...")
-    gen_html(data, contacts, args.output)
-    spinner.stop(f"Saved to {args.output}")
-    
-    subprocess.run(['open', args.output])
-    print("\n  Done! Click through your wrapped.\n")
-
-if __name__ == '__main__':
-    main()
+</body></html>
