@@ -460,7 +460,7 @@ def analyze(ts_start, ts_jun):
     elif d['starter_pct'] < 35: d['personality'] = ("THE WAITER", "never texts first, ever")
     else: d['personality'] = ("SUSPICIOUSLY NORMAL", "no notes. boring but stable.")
 
-    return d
+        return d
 
 def gen_html(d, contacts, path):
     s = d['stats']
