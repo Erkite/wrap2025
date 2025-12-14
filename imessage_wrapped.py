@@ -383,30 +383,30 @@ def analyze(ts_start, ts_jun):
             'participant_count': participant_count
         })
 
-    # === NEW: TOP 5 SENDERS IN MOST ACTIVE GROUP ===
-    d['top_group_senders'] = []
-    if d['group_leaderboard']:
-        top_group_id = d['group_leaderboard'][0]['chat_id']
-        
-        # Query: Get message count per sender (handle_id) in the top group
-        r_senders = q(f"""
-            SELECT 
-                CASE WHEN m.is_from_me = 1 THEN 'You' ELSE h.id END AS sender_id, 
-                COUNT(*) AS msg_count
-            FROM message m 
-            JOIN handle h ON m.handle_id = h.ROWID
-            JOIN chat_message_join cmj ON m.ROWID = cmj.message_id
-            WHERE cmj.chat_id = {top_group_id}
-            AND (m.date/1000000000+978307200) > {ts_start}
-            GROUP BY sender_id
-            ORDER BY msg_count DESC 
-            LIMIT 5
-        """)
-        
-        # Format the results
-        for sender_id, msg_count in r_senders:
-            # Note: We store the handle ID here. The `get_name` function handles 'You' and resolves other IDs.
-            d['top_group_senders'].append({'id': sender_id, 'msg_count': msg_count})
+# --- MODIFIED: MVP SENDER IN TOP GROUP ---
+# ==========================================================
+d['top_group_senders'] = []
+if d['group_leaderboard']:
+    top_group_id = d['group_leaderboard'][0]['chat_id']
+    
+    # Query: Get message count per sender (handle_id) in the top group
+    # --- CHANGE: REMOVED 'LIMIT 5' ---
+    r_senders = q_imessage(f"""
+        SELECT 
+            CASE WHEN m.is_from_me = 1 THEN 'You' ELSE h.id END AS sender_id, 
+            COUNT(*) AS msg_count
+        FROM message m 
+        JOIN handle h ON m.handle_id = h.ROWID
+        JOIN chat_message_join cmj ON m.ROWID = cmj.message_id
+        WHERE cmj.chat_id = {top_group_id}
+        AND (m.date/1000000000+978307200) > {ts_start}
+        GROUP BY sender_id
+        ORDER BY msg_count DESC 
+    """)
+    
+    # Format the results
+    for sender_id, msg_count in r_senders:
+        d['top_group_senders'].append({'id': sender_id, 'msg_count': msg_count, 'source': 'imessage'})  
         
     # Rest of calculation (streaks, personality, etc.)
     # ... (Keep existing daily_counts and personality logic)
