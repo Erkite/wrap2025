@@ -1,8 +1,4 @@
 #!/usr/bin/env python3
-"""
-iMessage Wrapped 2025 - Your texting habits, exposed.
-Usage: python3 imessage_wrapped.py
-"""
 
 import sqlite3, os, sys, re, subprocess, argparse, glob, threading, time
 from datetime import datetime, timedelta
@@ -11,7 +7,6 @@ IMESSAGE_DB = os.path.expanduser("~/Library/Messages/chat.db")
 ADDRESSBOOK_DIR = os.path.expanduser("~/Library/Application Support/AddressBook")
 
 class Spinner:
-    """Animated terminal spinner for long operations"""
     def __init__(self, message=""):
         self.message = message
         self.spinning = False
@@ -42,7 +37,6 @@ class Spinner:
         else:
             print()
 
-# Timestamps: Unix timestamp in nanoseconds since 2001 (divide by 1000000000 and add 978307200 for Unix seconds)
 TS_2025 = 1735689600
 TS_JUN_2025 = 1748736000
 TS_2024 = 1704067200
@@ -51,16 +45,13 @@ TS_JUN_2024 = 1717200000
 def normalize_phone(phone):
     if not phone: return None
     digits = re.sub(r'\D', '', str(phone))
-    # Handle common international prefixes
     if len(digits) == 11 and digits.startswith('1'):
         digits = digits[1:]
     elif len(digits) > 10:
-        # For international numbers, store full digits for exact matching
         return digits
     return digits[-10:] if len(digits) >= 10 else (digits if len(digits) >= 7 else None)
 
 def extract_contacts():
-    """Extract contacts from macOS AddressBook."""
     contacts = {}
     db_paths = glob.glob(os.path.join(ADDRESSBOOK_DIR, "Sources", "*", "AddressBook-v22.abcddb"))
     main_db = os.path.join(ADDRESSBOOK_DIR, "AddressBook-v22.abcddb")
@@ -76,15 +67,14 @@ def extract_contacts():
                 if owner in people:
                     name = people[owner]
                     digits = re.sub(r'\D', '', str(phone))
-                    # Store multiple formats for better matching
                     if digits:
-                        contacts[digits] = name  # Full international
+                        contacts[digits] = name
                         if len(digits) >= 10:
-                            contacts[digits[-10:]] = name  # Last 10
+                            contacts[digits[-10:]] = name
                         if len(digits) >= 7:
-                            contacts[digits[-7:]] = name  # Last 7 (local)
+                            contacts[digits[-7:]] = name
                         if len(digits) == 11 and digits.startswith('1'):
-                            contacts[digits[1:]] = name  # Without US prefix
+                            contacts[digits[1:]] = name
             for owner, email in conn.execute("SELECT ZOWNER, ZADDRESS FROM ZABCDEMAILADDRESS WHERE ZADDRESS IS NOT NULL"):
                 if owner in people: contacts[email.lower().strip()] = people[owner]
             conn.close()
@@ -92,25 +82,19 @@ def extract_contacts():
     return contacts
 
 def get_name(handle, contacts):
-    """Resolve handle ID (phone/email) to contact name."""
-    if handle == 'You': return 'You' # Special case for 'You' in group stats
+    if handle == 'You': return 'You'
     
     if '@' in handle:
         lookup = handle.lower().strip()
         if lookup in contacts: return contacts[lookup]
         return handle.split('@')[0]
         
-    # Try multiple phone formats for matching
     digits = re.sub(r'\D', '', str(handle))
-    # Try full digits first (international)
     if digits in contacts: return contacts[digits]
-    # Try without leading 1 (US/Canada)
     if len(digits) == 11 and digits.startswith('1'):
         if digits[1:] in contacts: return contacts[digits[1:]]
-    # Try last 10 digits
     if len(digits) >= 10 and digits[-10:] in contacts:
         return contacts[digits[-10:]]
-    # Try last 7 digits (local)
     if len(digits) >= 7 and digits[-7:] in contacts:
         return contacts[digits[-7:]]
         
@@ -139,7 +123,6 @@ def q(sql):
 def analyze(ts_start, ts_jun):
     d = {}
 
-    # Common table expression for 1:1 chat filtering
     one_on_one_cte = """
         WITH chat_participants AS (
             SELECT chat_id, COUNT(*) as participant_count
@@ -155,7 +138,6 @@ def analyze(ts_start, ts_jun):
         )
     """
 
-    # Stats
     raw_stats = q(f"""{one_on_one_cte}
         SELECT COUNT(*), SUM(CASE WHEN is_from_me=1 THEN 1 ELSE 0 END), SUM(CASE WHEN is_from_me=0 THEN 1 ELSE 0 END), COUNT(DISTINCT handle_id)
         FROM message m
@@ -164,7 +146,6 @@ def analyze(ts_start, ts_jun):
     """)[0]
     d['stats'] = (raw_stats[0] or 0, raw_stats[1] or 0, raw_stats[2] or 0, raw_stats[3] or 0)
 
-    # Top contacts (1:1 only, excluding 5-6 digit shortcodes)
     d['top'] = q(f"""{one_on_one_cte}
         SELECT h.id, COUNT(*) t, SUM(CASE WHEN m.is_from_me=1 THEN 1 ELSE 0 END), SUM(CASE WHEN m.is_from_me=0 THEN 1 ELSE 0 END)
         FROM message m JOIN handle h ON m.handle_id=h.ROWID
@@ -174,7 +155,6 @@ def analyze(ts_start, ts_jun):
         GROUP BY h.id ORDER BY t DESC LIMIT 20
     """)
 
-    # Late night texters (1:1 only, excluding shortcodes)
     d['late'] = q(f"""{one_on_one_cte}
         SELECT h.id, COUNT(*) n FROM message m JOIN handle h ON m.handle_id=h.ROWID
         WHERE (m.date/1000000000+978307200)>{ts_start}
@@ -184,16 +164,13 @@ def analyze(ts_start, ts_jun):
         GROUP BY h.id HAVING n>5 ORDER BY n DESC LIMIT 5
     """)
     
-    # Peak hour
     r = q(f"SELECT CAST(strftime('%H',datetime((date/1000000000+978307200),'unixepoch','localtime')) AS INT) h, COUNT(*) c FROM message WHERE (date/1000000000+978307200)>{ts_start} GROUP BY h ORDER BY c DESC LIMIT 1")
     d['hour'] = r[0][0] if r else 12
     
-    # Peak day
     days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday']
     r = q(f"SELECT CAST(strftime('%w',datetime((date/1000000000+978307200),'unixepoch','localtime')) AS INT) d, COUNT(*) FROM message WHERE (date/1000000000+978307200)>{ts_start} GROUP BY d ORDER BY 2 DESC LIMIT 1")
     d['day'] = days[r[0][0]] if r else '???'
     
-    # Ghosted (1:1 only, excluding shortcodes)
     d['ghosted'] = q(f"""{one_on_one_cte}
         SELECT h.id, SUM(CASE WHEN m.is_from_me=0 AND (m.date/1000000000+978307200)<{ts_jun} THEN 1 ELSE 0 END) b, SUM(CASE WHEN m.is_from_me=0 AND (m.date/1000000000+978307200)>={ts_jun} THEN 1 ELSE 0 END) a
         FROM message m JOIN handle h ON m.handle_id=h.ROWID
@@ -203,7 +180,6 @@ def analyze(ts_start, ts_jun):
         GROUP BY h.id HAVING b>10 AND a<3 ORDER BY b DESC LIMIT 5
     """)
 
-    # Heating up (1:1 only, excluding shortcodes)
     d['heating'] = q(f"""{one_on_one_cte}
         SELECT h.id, SUM(CASE WHEN (m.date/1000000000+978307200)<{ts_jun} THEN 1 ELSE 0 END) h1, SUM(CASE WHEN (m.date/1000000000+978307200)>={ts_jun} THEN 1 ELSE 0 END) h2
         FROM message m JOIN handle h ON m.handle_id=h.ROWID
@@ -213,7 +189,6 @@ def analyze(ts_start, ts_jun):
         GROUP BY h.id HAVING h1>20 AND h2>h1*1.5 ORDER BY (h2-h1) DESC LIMIT 5
     """)
 
-    # Biggest fan (1:1 only, excluding shortcodes)
     d['fan'] = q(f"""{one_on_one_cte}
         SELECT h.id, SUM(CASE WHEN m.is_from_me=0 THEN 1 ELSE 0 END) t, SUM(CASE WHEN m.is_from_me=1 THEN 1 ELSE 0 END) y
         FROM message m JOIN handle h ON m.handle_id=h.ROWID
@@ -223,7 +198,6 @@ def analyze(ts_start, ts_jun):
         GROUP BY h.id HAVING t>y*2 AND (t+y)>100 ORDER BY (t*1.0/NULLIF(y,0)) DESC LIMIT 5
     """)
 
-    # Simp (1:1 only, excluding shortcodes)
     d['simp'] = q(f"""{one_on_one_cte}
         SELECT h.id, SUM(CASE WHEN m.is_from_me=1 THEN 1 ELSE 0 END) y, SUM(CASE WHEN m.is_from_me=0 THEN 1 ELSE 0 END) t
         FROM message m JOIN handle h ON m.handle_id=h.ROWID
@@ -233,7 +207,6 @@ def analyze(ts_start, ts_jun):
         GROUP BY h.id HAVING y>t*2 AND (t+y)>100 ORDER BY (y*1.0/NULLIF(t,0)) DESC LIMIT 5
     """)
     
-    # Response time: partition by handle_id so we measure per-conversation (1:1 only)
     r = q(f"""
         WITH chat_participants AS (
             SELECT chat_id, COUNT(*) as participant_count
@@ -260,7 +233,6 @@ def analyze(ts_start, ts_jun):
     """)
     d['resp'] = int(r[0][0] or 30)
     
-    # Emojis
     emojis = ['😂','❤️','😭','🔥','💀','✨','🙏','👀','💯','😈']
     counts = {}
     for e in emojis:
@@ -268,7 +240,6 @@ def analyze(ts_start, ts_jun):
         counts[e] = r[0][0]
     d['emoji'] = sorted(counts.items(), key=lambda x:-x[1])[:5]
     
-    # Total words sent
     r = q(f"""
         SELECT
             COUNT(*) as msg_count,
@@ -290,11 +261,9 @@ def analyze(ts_start, ts_jun):
     extra_words = r[0][1] or 0
     d['words'] = msg_count + extra_words
     
-    # Busiest day
     r = q(f"SELECT DATE(datetime((date/1000000000+978307200),'unixepoch','localtime')) d, COUNT(*) c FROM message WHERE (date/1000000000+978307200)>{ts_start} GROUP BY d ORDER BY c DESC LIMIT 1")
     d['busiest_day'] = (r[0][0], r[0][1]) if r else None
     
-    # Conversation starter %
     r = q(f"""
         WITH chat_participants AS (
             SELECT chat_id, COUNT(*) as participant_count
@@ -328,7 +297,6 @@ def analyze(ts_start, ts_jun):
     else:
         d['starter_pct'] = 50
 
-    # Group chat setup
     group_chat_cte = """
         WITH chat_participants AS (
             SELECT chat_id, COUNT(*) as participant_count
@@ -346,7 +314,6 @@ def analyze(ts_start, ts_jun):
         )
     """
 
-    # Group chat overview
     r = q(f"""{group_chat_cte}
         SELECT
             (SELECT COUNT(DISTINCT chat_id) FROM group_messages gm
@@ -360,7 +327,6 @@ def analyze(ts_start, ts_jun):
     """)
     d['group_stats'] = {'count': r[0][0] or 0, 'total': r[0][1] or 0, 'sent': r[0][2] or 0}
 
-    # Group chat leaderboard (Top 5 active groups)
     r = q(f"""
         WITH chat_participants AS (
             SELECT chat_id, COUNT(*) as participant_count FROM chat_handle_join GROUP BY chat_id
@@ -386,18 +352,15 @@ def analyze(ts_start, ts_jun):
         chat_id, display_name, msg_count, participant_count = row
         d['group_leaderboard'].append({
             'chat_id': chat_id,
-            'name': display_name, # Stored name here, resolve in gen_html
+            'name': display_name,
             'msg_count': msg_count,
             'participant_count': participant_count
         })
 
-    # === MODIFIED: MVP SENDER IN TOP GROUP - REMOVED LIMIT ===
     d['top_group_senders'] = []
     if d['group_leaderboard']:
         top_group_id = d['group_leaderboard'][0]['chat_id']
         
-        # Query: Get message count per sender (handle_id) in the top group
-        # NOTE: LIMIT 5 HAS BEEN REMOVED TO GET ALL MEMBERS
         r_senders = q(f"""
             SELECT 
                 CASE WHEN m.is_from_me = 1 THEN 'You' ELSE h.id END AS sender_id, 
@@ -409,14 +372,11 @@ def analyze(ts_start, ts_jun):
             AND (m.date/1000000000+978307200) > {ts_start}
             GROUP BY sender_id
             ORDER BY msg_count DESC 
-        """) # LIMIT 5 removed here
+        """)
         
-        # Format the results
         for sender_id, msg_count in r_senders:
-            # Note: We store the handle ID here. The `get_name` function handles 'You' and resolves other IDs.
             d['top_group_senders'].append({'id': sender_id, 'msg_count': msg_count})
         
-    # Rest of calculation (streaks, personality, etc.)
     daily_counts = q(f"""
         SELECT DATE(datetime((date/1000000000+978307200),'unixepoch','localtime')) as d, COUNT(*) as c
         FROM message
@@ -460,22 +420,19 @@ def analyze(ts_start, ts_jun):
     elif d['starter_pct'] < 35: d['personality'] = ("THE WAITER", "never texts first, ever")
     else: d['personality'] = ("SUSPICIOUSLY NORMAL", "no notes. boring but stable.")
 
-        return d
+    return d
 
 def gen_html(d, contacts, path):
     s = d['stats']
     top = d['top']
-    # Use lambda to resolve handle to name with contacts passed from main
     n = lambda h: get_name(h, contacts)
     ptype, proast = d['personality']
     hr = d['hour']
-    # Format hour: 0->12AM, 1-11->AM, 12->12PM, 13-23->PM
     if hr == 0: hr_str = "12AM"
     elif hr < 12: hr_str = f"{hr}AM"
     elif hr == 12: hr_str = "12PM"
     else: hr_str = f"{hr-12}PM"
     
-    # Format busiest day
     from datetime import datetime as dt
     if d['busiest_day']:
         bd = dt.strptime(d['busiest_day'][0], '%Y-%m-%d')
@@ -485,7 +442,6 @@ def gen_html(d, contacts, path):
         busiest_str = "N/A"
         busiest_count = 0
 
-    # Calculate days elapsed in the year for accurate per-day stats
     now = dt.now()
     year_start = dt(int(d['year']), 1, 1)
     days_elapsed = max(1, (now - year_start).days)
@@ -496,7 +452,6 @@ def gen_html(d, contacts, path):
     
     slides = []
 
-    # Slide 1: Intro
     slides.append('''
     <div class="slide intro">
         <div class="slide-icon">📱</div>
@@ -505,7 +460,6 @@ def gen_html(d, contacts, path):
         <div class="tap-hint">click anywhere to start →</div>
     </div>''')
 
-    # Slide 2: Total messages
     slides.append(f'''
     <div class="slide">
         <div class="slide-label">// TOTAL DAMAGE</div>
@@ -520,7 +474,6 @@ def gen_html(d, contacts, path):
         <div class="slide-watermark">wrap2025.com</div>
     </div>''')
     
-    # Slide 3: Words sent
     slides.append(f'''
     <div class="slide">
         <div class="slide-label">// WORD COUNT</div>
@@ -531,7 +484,6 @@ def gen_html(d, contacts, path):
         <div class="slide-watermark">wrap2025.com</div>
     </div>''')
 
-    # Slide 4: Contribution Graph
     if d['daily_counts']:
         from datetime import datetime as dt, date as ddate
         today = dt.now().date()
@@ -612,7 +564,6 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-    # Slide 5: Your #1
     if top:
         slides.append(f'''
         <div class="slide pink-bg">
@@ -625,18 +576,15 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-        # Slide 6: Top 5
-        top5_html = ''.join([f'<div class="rank-item"><span class="rank-num">{i}</span><span class="rank-name">{n(h)}</span><span class="rank-count">{t:,}</span></div>' for i,(h,t,_,_) in enumerate(top[:5],1)])
         slides.append(f'''
         <div class="slide">
             <div class="slide-label">// INNER CIRCLE</div>
             <div class="slide-text">your top 5</div>
-            <div class="rank-list">{top5_html}</div>
+            <div class="rank-list">{''.join([f'<div class="rank-item"><span class="rank-num">{i}</span><span class="rank-name">{n(h)}</span><span class="rank-count">{t:,}</span></div>' for i,(h,t,_,_) in enumerate(top[:5],1)])}</div>
             <button class="slide-save-btn" onclick="saveSlide(this.parentElement, 'wrapped_inner_circle.png', this)">📸 Save</button>
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
     
-    # Slide 7: Group Chat Overview
     gs = d['group_stats']
     if gs['count'] > 0:
         lurker_pct = round((1 - gs['sent'] / max(gs['total'], 1)) * 100)
@@ -659,12 +607,10 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-        # Slide 8: Group Chat Leaderboard
         if d['group_leaderboard']:
             def format_group_name(gc):
                 if gc['name']:
                     return gc['name']
-                # Fallback: list the first two participants
                 handles = q(f"""
                     SELECT h.id FROM chat_handle_join chj
                     JOIN handle h ON chj.handle_id = h.ROWID
@@ -690,11 +636,9 @@ def gen_html(d, contacts, path):
                 <div class="slide-watermark">wrap2025.com</div>
             </div>''')
 
-            # === NEW SLIDE: ALL SENDERS IN TOP GROUP (MVP) ===
             if d['top_group_senders']:
                 top_group_name = format_group_name(d['group_leaderboard'][0])
                 
-                # The loop now iterates over ALL members returned by the SQL query
                 sender_html = ''.join([
                     f'<div class="rank-item"><span class="rank-num">#{i+1}</span><span class="rank-name">{n(s["id"])}</span><span class="rank-count green">{s["msg_count"]:,}</span></div>'
                     for i, s in enumerate(d['top_group_senders'])
@@ -709,7 +653,6 @@ def gen_html(d, contacts, path):
                 </div>''')
 
 
-    # Slide 9: Personality
     slides.append(f'''
     <div class="slide purple-bg">
         <div class="slide-label">// DIAGNOSIS</div>
@@ -720,7 +663,6 @@ def gen_html(d, contacts, path):
         <div class="slide-watermark">wrap2025.com</div>
     </div>''')
 
-    # Slide 10: Conversation Starter (Who texts first)
     starter_label = "YOU START" if d['starter_pct'] > 50 else "THEY START"
     starter_class = "green" if d['starter_pct'] > 50 else "yellow"
     slides.append(f'''
@@ -734,9 +676,6 @@ def gen_html(d, contacts, path):
         <div class="slide-watermark">wrap2025.com</div>
     </div>''')
 
-    # ... (Rest of the slides: Response time, Peak hours, 3AM Bestie, Busiest Day, Fan, Simp, Heating Up, Ghosted, Emojis, Summary)
-    
-    # Slide: Response time
     resp_class = 'green' if d['resp'] < 10 else 'yellow' if d['resp'] < 60 else 'red'
     resp_label = "INSTANT" if d['resp'] < 10 else "NORMAL" if d['resp'] < 60 else "SLOW"
     slides.append(f'''
@@ -750,7 +689,6 @@ def gen_html(d, contacts, path):
         <div class="slide-watermark">wrap2025.com</div>
     </div>''')
 
-    # Slide: Peak hours
     slides.append(f'''
     <div class="slide">
         <div class="slide-label">// PEAK HOURS</div>
@@ -761,7 +699,6 @@ def gen_html(d, contacts, path):
         <div class="slide-watermark">wrap2025.com</div>
     </div>''')
 
-    # Slide: 3AM Bestie
     if d['late']:
         ln = d['late'][0]
         slides.append(f'''
@@ -775,7 +712,6 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-    # Slide: Busiest Day
     if d['busiest_day']:
         slides.append(f'''
         <div class="slide">
@@ -788,7 +724,6 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-    # Slide: Biggest fan
     if d['fan']:
         f = d['fan'][0]
         ratio = round(f[1]/(f[2]+1), 1)
@@ -802,7 +737,6 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-    # Slide: Down bad
     if d['simp']:
         si = d['simp'][0]
         ratio = round(si[1]/(si[2]+1), 1)
@@ -816,7 +750,6 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-    # Slide: Heating Up
     if d['heating']:
         heat_html = ''.join([f'<div class="rank-item"><span class="rank-num">🔥</span><span class="rank-name">{n(h)}</span><span class="rank-count green">+{h2-h1}</span></div>' for h,h1,h2 in d['heating'][:5]])
         slides.append(f'''
@@ -828,7 +761,6 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-    # Slide: Ghosted
     if d['ghosted']:
         ghost_html = ''.join([f'<div class="rank-item"><span class="rank-num">👻</span><span class="rank-name">{n(h)}</span><span class="rank-count"><span class="green">{b}</span> → <span class="red">{a}</span></span></div>' for h,b,a in d['ghosted'][:5]])
         slides.append(f'''
@@ -841,7 +773,6 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-    # Slide: Emojis
     if d['emoji'] and any(e[1] > 0 for e in d['emoji']):
         emo = '  '.join([e[0] for e in d['emoji'] if e[1] > 0])
         slides.append(f'''
@@ -853,7 +784,6 @@ def gen_html(d, contacts, path):
             <div class="slide-watermark">wrap2025.com</div>
         </div>''')
 
-    # Final slide: Summary card
     top3_names = ', '.join([n(h[0]) for h,_,_,_ in top[:3]]) if top else "No contacts"
     slides.append(f'''
     <div class="slide summary-slide">
@@ -907,7 +837,6 @@ def gen_html(d, contacts, path):
     slides_html = ''.join(slides)
     num_slides = len(slides)
     
-    # Favicon as base64 SVG
     favicon = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌯</text></svg>"
     
     html = f'''<!DOCTYPE html>
@@ -967,7 +896,7 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 .slide.purple-bg {{ background:linear-gradient(145deg,#12121f 0%,#1f1a3d 100%); }}
 .slide.orange-bg {{ background:linear-gradient(145deg,#12121f 0%,#2d1f1a 100%); }}
 .slide.red-bg {{ background:linear-gradient(145deg,#12121f 0%,#2d1a1a 100%); }}
-.slide.whatsapp-bg {{ background:linear-gradient(145deg,#12121f 0%,#0d2f1a 100%); }} /* New background for MVP slide */
+.slide.whatsapp-bg {{ background:linear-gradient(145deg,#12121f 0%,#0d2f1a 100%); }}
 .slide.summary-slide {{ background:linear-gradient(145deg,#0f2847 0%,#12121f 50%,#1a1a2e 100%); }}
 .slide.contrib-slide {{ background:linear-gradient(145deg,#12121f 0%,#0f1f2d 100%); padding:24px 16px 80px; }}
 
@@ -1613,7 +1542,7 @@ def main():
     print(f"[*] Analyzing {year}...")
     spinner.start("Reading message database...")
     data = analyze(ts_start, ts_jun)
-    data['year'] = int(year)  # Pass the year to gen_html
+    data['year'] = int(year)
     spinner.stop(f"{data['stats'][0]:,} messages analyzed")
 
     print(f"[*] Generating report...")
