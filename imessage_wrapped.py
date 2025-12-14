@@ -82,7 +82,7 @@ def extract_contacts():
     return contacts
 
 def get_name(handle, contacts):
-    # FIX: Check for None (NULL) handles returned by the LEFT JOIN when a message has no handle_id
+    # FIX: Handle case where h.id is NULL (NoneType) due to LEFT JOIN
     if handle is None:
         return "Unknown Sender"
         
@@ -366,7 +366,7 @@ def analyze(ts_start, ts_jun, contacts):
         top_group_id = d['group_leaderboard'][0]['chat_id']
         
         # 1. Get raw sender IDs and message counts for all members
-        # Corrected SQL: Use LEFT JOIN to include 'You' messages (m.is_from_me=1) which often have a NULL handle_id.
+        # FIX: Use LEFT JOIN to include 'You' messages (m.is_from_me=1) which often have a NULL handle_id.
         raw_senders = q(f"""
             SELECT 
                 CASE WHEN m.is_from_me = 1 THEN 'You' ELSE h.id END AS sender_id, 
@@ -1057,7 +1057,7 @@ body {{ font-family:'Space Grotesk',sans-serif; background:var(--bg); color:var(
 /* === PINK SLIDE (#1 person) - Soft glow === */
 .slide.pink-bg.active .slide-label {{ animation: textFade 0.4s ease-out forwards; }}
 .slide.pink-bg.active .huge-name {{ animation: nameGlow 0.6s ease-out 0.15s forwards; }}
-.slide.pink-bg.active .big-number {{ animation: numberFlip 0.5s ease-out 0.35s forwards; }}
+.slide.pink-bg.active .big-number {{ animation: numberFlip 0.6s ease-out 0.35s forwards; }}
 
 /* === PURPLE SLIDE (Personality) - Glitch === */
 .slide.purple-bg.active .slide-label {{ animation: labelGlitch 0.5s ease-out forwards; }}
